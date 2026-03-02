@@ -11,7 +11,7 @@ export default function DashboardLayout({
             <Sidebar />
             <div className="flex flex-col flex-1 overflow-hidden relative">
                 <Header />
-                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:px-6 sm:pb-6 relative z-0">
+                <main className="flex flex-col flex-1 overflow-hidden p-4 sm:px-6 sm:pb-6 relative z-0">
                     {children}
                 </main>
             </div>

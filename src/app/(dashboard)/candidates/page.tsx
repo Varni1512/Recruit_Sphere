@@ -177,9 +177,9 @@ export default function CandidatesPage() {
                                                 <span className="sr-only">View candidate details</span>
                                             </Button>
                                         </SheetTrigger>
-                                        <SheetContent className="sm:max-w-md w-[400px]">
-                                            <SheetHeader>
-                                                <div className="flex items-center gap-4 mt-6">
+                                        <SheetContent className="sm:max-w-md w-[400px] p-5 overflow-y-auto">
+                                            <SheetHeader className="p-0">
+                                                <div className="flex items-center gap-4 mt-2">
                                                     <Avatar className="h-16 w-16">
                                                         <AvatarImage src={`https://avatar.vercel.sh/${candidate.id}.png`} alt={candidate.name} />
                                                         <AvatarFallback>{candidate.name.charAt(0)}</AvatarFallback>
@@ -228,7 +228,7 @@ export default function CandidatesPage() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex justify-between items-center gap-3">
+                                                <div className="flex flex-col gap-3">
                                                     <Button className="w-full">Schedule Interview</Button>
                                                     <Button variant="outline" className="w-full">Reject</Button>
                                                 </div>

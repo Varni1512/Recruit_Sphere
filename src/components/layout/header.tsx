@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, LogOut, Menu, Search, User } from "lucide-react"
+import { Bell, Menu, Search, User } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,15 +48,6 @@ export function Header() {
             </SheetDescription>
           </SheetHeader>
           <SidebarNavItems isMobile />
-          <div className="absolute bottom-6 left-6 right-6">
-            <Link
-              href="/login"
-              className="flex items-center justify-center gap-2 rounded-lg bg-red-500/10 text-red-600 px-3 py-2.5 text-sm font-medium transition-all hover:bg-red-500/20 w-full"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Link>
-          </div>
         </SheetContent>
       </Sheet>
       <div className="w-full flex-1">
@@ -105,15 +96,32 @@ export function Header() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Link href="/profile" className="flex items-center gap-2">
-        <Button variant="secondary" size="icon" className="rounded-full ring-2 ring-transparent transition-all hover:ring-primary/20">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="https://github.com/shadcn.png" alt="@admin" />
-            <AvatarFallback>AD</AvatarFallback>
-          </Avatar>
-          <span className="sr-only">View profile</span>
-        </Button>
-      </Link>
-    </header >
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="secondary" size="icon" className="rounded-full ring-2 ring-transparent transition-all hover:ring-primary/20">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="https://github.com/shadcn.png" alt="@admin" />
+              <AvatarFallback>AD</AvatarFallback>
+            </Avatar>
+            <span className="sr-only">View profile</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">Admin Recruiter</p>
+              <p className="text-xs leading-none text-muted-foreground">
+                recruiter@example.com
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/profile" className="cursor-pointer">Profile</Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </header>
   )
 }

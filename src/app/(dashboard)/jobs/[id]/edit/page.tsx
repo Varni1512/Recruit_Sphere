@@ -2,7 +2,10 @@
 
 import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
+import { useState, use } from "react"
+import dynamic from 'next/dynamic'
 
+const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -24,12 +27,15 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 
-export default function EditJobPage({ params }: { params: { id: string } }) {
+export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params)
+    const [description, setDescription] = useState("We are looking for an experienced Senior Product Designer to join our dynamic team. You will be responsible for leading the design of our core product features, working closely with engineering and product management to deliver exceptional user experiences.")
+
     return (
-        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
+        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto h-full overflow-y-auto pb-8 px-1">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" asChild>
-                    <Link href={`/jobs/${params.id}`}>
+                    <Link href={`/jobs/${id}`}>
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
                 </Button>
@@ -107,16 +113,21 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
 
                     <div className="grid gap-2">
                         <Label htmlFor="description">Job Description</Label>
-                        <Textarea
-                            id="description"
-                            defaultValue="We are looking for an experienced Senior Product Designer to join our dynamic team. You will be responsible for leading the design of our core product features, working closely with engineering and product management to deliver exceptional user experiences."
-                            className="min-h-[200px]"
-                        />
+                        <div className="border rounded-md overflow-hidden bg-background">
+                            <MDEditor
+                                value={description}
+                                onChange={(val) => setDescription(val || '')}
+                                height={300}
+                                preview="edit"
+                                hideToolbar={false}
+                                className="w-full"
+                            />
+                        </div>
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-4 border-t px-6 py-4">
                     <Button variant="outline" asChild>
-                        <Link href={`/jobs/${params.id}`}>Cancel</Link>
+                        <Link href={`/jobs/${id}`}>Cancel</Link>
                     </Button>
                     <Button>
                         <Save className="mr-2 h-4 w-4" />

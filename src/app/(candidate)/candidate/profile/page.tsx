@@ -2,7 +2,9 @@
 
 import { Building2, Calendar as CalendarIcon, FileText, Link as LinkIcon, MapPin, Plus, Save, Trash2, Upload } from "lucide-react"
 import { useState } from "react"
+import dynamic from 'next/dynamic'
 
+const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 
 export default function CandidateProfilePage() {
+    const [summary, setSummary] = useState("Passionate and results-driven Senior Frontend Engineer with 5+ years of experience building scalable web applications. Expertise in React, TypeScript, and modern styling architectures. Deeply committed to creating accessible, high-performance UIs that solve real user problems.")
     const [skills, setSkills] = useState(["React", "TypeScript", "Next.js", "Tailwind CSS", "Node.js"])
     const [newSkill, setNewSkill] = useState("")
 
@@ -140,10 +143,16 @@ export default function CandidateProfilePage() {
                             <CardTitle>Professional Summary</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <Textarea
-                                className="min-h-[120px]"
-                                defaultValue="Passionate and results-driven Senior Frontend Engineer with 5+ years of experience building scalable web applications. Expertise in React, TypeScript, and modern styling architectures. Deeply committed to creating accessible, high-performance UIs that solve real user problems."
-                            />
+                            <div className="border rounded-md overflow-hidden bg-background">
+                                <MDEditor
+                                    value={summary}
+                                    onChange={(val) => setSummary(val || '')}
+                                    height={200}
+                                    preview="edit"
+                                    hideToolbar={false}
+                                    className="w-full"
+                                />
+                            </div>
                         </CardContent>
                     </Card>
 

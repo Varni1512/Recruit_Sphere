@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { logout } from "@/app/actions/auth"
 
 const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -67,13 +68,15 @@ export function Sidebar() {
 
             <div className="mt-auto border-t p-4">
                 <nav className="grid gap-1">
-                    <Link
-                        href="/login"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-500 transition-all hover:bg-red-500/10"
-                    >
-                        <LogOut className="h-4 w-4" />
-                        Logout
-                    </Link>
+                    <form action={logout}>
+                        <button
+                            type="submit"
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-500 transition-all hover:bg-red-500/10 cursor-pointer"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            Logout
+                        </button>
+                    </form>
                 </nav>
             </div>
         </aside>

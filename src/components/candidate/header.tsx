@@ -23,7 +23,7 @@ export function CandidateHeader() {
     const [open, setOpen] = useState(false)
 
     return (
-        <header className="flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur lg:h-[60px] lg:px-6 shrink-0 z-10 sticky top-0 w-full">
+        <header className="flex h-14 items-center gap-4 bg-muted/30 px-4 lg:h-[60px]  lg:px-6 shrink-0 z-10 sticky top-0 w-full">
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetTrigger asChild>
                     <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -108,9 +108,6 @@ export function CandidateHeader() {
                             <Link href="/candidate/profile" className="cursor-pointer">Profile</Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href="/login" className="cursor-pointer text-destructive">Log out</Link>
-                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>

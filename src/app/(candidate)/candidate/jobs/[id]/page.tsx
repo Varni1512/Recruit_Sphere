@@ -1,7 +1,10 @@
 "use client"
 
-import { Building2, Calendar, MapPin, Search, Upload, ArrowLeft } from "lucide-react"
+import { MapPin, Briefcase, DollarSign, Calendar, Building2, CheckCircle2, ArrowLeft, Upload, FileText, ExternalLink } from "lucide-react"
 import { useState, use } from "react"
+import dynamic from 'next/dynamic'
+
+const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -24,6 +27,7 @@ export default function CandidateJobDetailsPage({ params }: { params: Promise<{ 
     const { id } = use(params)
     const router = useRouter()
     const [isApplying, setIsApplying] = useState(false)
+    const [coverLetter, setCoverLetter] = useState("")
 
     // Find the specific job from the shared mock data
     const job = availableJobs.find(j => j.id === id)
@@ -76,12 +80,17 @@ export default function CandidateJobDetailsPage({ params }: { params: Promise<{ 
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="coverLetter">Cover Letter (Optional)</Label>
-                                <Textarea
-                                    id="coverLetter"
-                                    placeholder="Why are you a great fit for this role?"
-                                    className="min-h-[160px]"
-                                />
+                                <Label htmlFor="coverLetter">Cover Letter</Label>
+                                <div className="border rounded-md overflow-hidden bg-background">
+                                    <MDEditor
+                                        value={coverLetter}
+                                        onChange={(val) => setCoverLetter(val || '')}
+                                        height={250}
+                                        preview="edit"
+                                        hideToolbar={false}
+                                        className="w-full"
+                                    />
+                                </div>
                             </div>
 
                             <div className="grid gap-2">

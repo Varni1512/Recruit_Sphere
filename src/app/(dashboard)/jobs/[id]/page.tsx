@@ -11,10 +11,12 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
-export default function JobDetailsPage({ params }: { params: { id: string } }) {
+export default async function JobDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+
     // Mock data for the specific job
     const job = {
-        id: params.id,
+        id: id,
         title: "Senior Product Designer",
         department: "Design",
         location: "Remote",

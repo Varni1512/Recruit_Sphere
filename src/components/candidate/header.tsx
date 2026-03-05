@@ -14,7 +14,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { CandidateSidebarNavItems } from "@/components/candidate/sidebar"
@@ -23,7 +23,7 @@ export function CandidateHeader() {
     const [open, setOpen] = useState(false)
 
     return (
-        <header className="flex h-14 items-center gap-4 bg-muted/30 px-4 lg:h-[60px]  lg:px-6 shrink-0 z-10 sticky top-0 w-full">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 mt-0 sm:mt-4">
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetTrigger asChild>
                     <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -31,18 +31,19 @@ export function CandidateHeader() {
                         <span className="sr-only">Toggle navigation menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="flex flex-col p-0 w-72">
-                    <div className="flex h-14 items-center border-b px-4 lg:h-[60px]">
-                        <Link href="/candidate/dashboard" className="flex items-center gap-2 font-semibold" onClick={() => setOpen(false)}>
+                <SheetContent side="left" className="w-[280px] sm:w-[350px]">
+                    <SheetHeader className="mb-6 mt-4">
+                        <SheetTitle className="flex items-center gap-2 font-bold tracking-tight text-xl text-primary justify-start">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                                 <User className="h-5 w-5" />
                             </div>
-                            <span className="text-xl font-bold tracking-tight">Recruit Sphere</span>
-                        </Link>
-                    </div>
-                    <div className="flex-1 py-4 px-2 overflow-auto">
-                        <CandidateSidebarNavItems isMobile={true} setOpenMobile={setOpen} />
-                    </div>
+                            Recruit Sphere
+                        </SheetTitle>
+                        <SheetDescription className="sr-only">
+                            Navigation menu
+                        </SheetDescription>
+                    </SheetHeader>
+                    <CandidateSidebarNavItems isMobile />
                 </SheetContent>
             </Sheet>
             <div className="w-full flex-1">

@@ -99,7 +99,7 @@ export default function SchedulerPage() {
     )
 
     return (
-        <div className="flex flex-col flex-1 w-full relative h-[calc(100vh-8rem)] gap-6 overflow-hidden">
+        <div className="flex flex-col w-full max-w-7xl mx-auto pb-4 gap-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Interview Scheduler</h1>
@@ -167,8 +167,8 @@ export default function SchedulerPage() {
                 </Dialog>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4 flex-1 min-h-0">
-                <Card className="col-span-1 border-none shadow-none bg-transparent sm:bg-card sm:border-solid sm:border sm:shadow-sm">
+            <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4 flex-1">
+                <Card className="col-span-1 border-none shadow-none bg-transparent sm:bg-card sm:border-solid sm:border sm:shadow-sm md:sticky md:top-0 md:self-start md:max-h-[calc(100vh-6rem)] overflow-y-auto">
                     <CardHeader>
                         <CardTitle>Calendar</CardTitle>
                         <CardDescription>Select a date to view schedule.</CardDescription>
@@ -183,7 +183,7 @@ export default function SchedulerPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="md:col-span-2 lg:col-span-3 h-full overflow-hidden flex flex-col">
+                <Card className="md:col-span-2 lg:col-span-3 flex flex-col mb-4">
                     <CardHeader className="border-b bg-muted/20 shrink-0">
                         <div className="flex items-center justify-between">
                             <div>
@@ -200,7 +200,7 @@ export default function SchedulerPage() {
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-0 flex-1 overflow-auto">
+                    <CardContent className="p-0">
                         <div className="flex flex-col h-full divide-y">
                             {filteredInterviews.length > 0 ? (
                                 filteredInterviews.map((interview) => (

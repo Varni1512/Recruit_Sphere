@@ -57,7 +57,7 @@ export default function CandidateInterviewsPage() {
     )
 
     return (
-        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto h-full overflow-hidden">
+        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Interview Schedule</h1>
@@ -67,10 +67,10 @@ export default function CandidateInterviewsPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 flex-1 min-h-0">
+            <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 flex-1">
 
                 {/* Left side: Calendar Selection & All Upcoming List */}
-                <div className="lg:col-span-3 xl:col-span-2 flex flex-col gap-6 overflow-auto pr-2 pb-6">
+                <div className="lg:col-span-3 xl:col-span-2 flex flex-col gap-6 lg:sticky lg:top-0 lg:self-start lg:max-h-[calc(100vh-2rem)] overflow-y-auto pr-2 pb-2">
                     <Card>
                         <CardHeader className="pb-3">
                             <CardTitle>Calendar</CardTitle>
@@ -85,11 +85,11 @@ export default function CandidateInterviewsPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="flex-1 min-h-0 bg-muted/10">
-                        <CardHeader className="pb-3">
+                    <Card className="flex-1 min-h-0 bg-muted/10 flex flex-col">
+                        <CardHeader className=" shrink-0">
                             <CardTitle className="text-lg">All Upcoming</CardTitle>
                         </CardHeader>
-                        <CardContent className="flex flex-col gap-3 px-4">
+                        <CardContent className="flex flex-col gap-3 px-4 overflow-y-auto pb-4">
                             {upcomingInterviews.map(interview => (
                                 <div
                                     key={interview.id}
@@ -109,7 +109,7 @@ export default function CandidateInterviewsPage() {
                 </div>
 
                 {/* Right side: Detailed View based on selection */}
-                <div className="lg:col-span-4 xl:col-span-5 flex flex-col gap-4 overflow-auto pb-6">
+                <div className="lg:col-span-4 xl:col-span-5 flex flex-col gap-4 pb-6">
                     <div className="flex items-center justify-between sticky top-0 bg-transparent py-1 backdrop-blur-sm z-10 shrink-0">
                         <h2 className="text-xl font-bold flex items-center gap-2">
                             <CalendarIcon className="h-5 w-5 text-primary" />

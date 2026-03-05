@@ -100,7 +100,7 @@ export const availableJobs = [
 
 export default function CandidateJobsPage() {
     return (
-        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto h-full overflow-hidden">
+        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Browse Jobs</h1>
@@ -113,7 +113,7 @@ export default function CandidateJobsPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-6 flex-1 min-h-0">
 
                 {/* Filters Sidebar */}
-                <div className="hidden md:flex flex-col gap-6 col-span-1 border-r pr-6 overflow-auto">
+                <div className="hidden md:flex flex-col gap-6 col-span-1 border-r pr-6 sticky top-0 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
                     <div>
                         <h3 className="font-semibold mb-4 text-sm">Filters</h3>
                     </div>
@@ -171,7 +171,7 @@ export default function CandidateJobsPage() {
                 </div>
 
                 {/* Main Job List */}
-                <div className="col-span-1 md:col-span-3 lg:col-span-4 flex flex-col h-full gap-4 min-h-0 overflow-hidden">
+                <div className="col-span-1 md:col-span-3 lg:col-span-4 flex flex-col gap-4">
                     <div className="flex gap-2 shrink-0">
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -185,7 +185,7 @@ export default function CandidateJobsPage() {
                         <Button variant="outline" className="shrink-0 md:hidden h-10">Filters</Button>
                     </div>
 
-                    <div className="flex-1 overflow-auto bg-transparent pb-6">
+                    <div className="pb-6">
                         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                             {availableJobs.map((job) => (
                                 <Card key={job.id} className="flex flex-col hover:border-primary/50 transition-colors">

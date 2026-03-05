@@ -31,7 +31,7 @@ export default function CreateJobPage() {
     const [description, setDescription] = useState("")
 
     return (
-        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto h-full overflow-y-auto pb-8 px-1">
+        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-6 px-1">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" asChild>
                     <Link href="/jobs">

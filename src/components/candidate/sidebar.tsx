@@ -5,16 +5,7 @@ import { usePathname } from "next/navigation"
 import { Briefcase, Calendar as CalendarIcon, FileText, Home, LogOut, User } from "lucide-react"
 import { logout } from "@/app/actions/auth"
 
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarProvider,
-} from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
 
 const candidateNavItems = [
     {
@@ -44,66 +35,61 @@ const candidateNavItems = [
     }
 ]
 
-export function CandidateSidebarNavItems({
-    isMobile = false,
-    setOpenMobile
-}: {
-    isMobile?: boolean,
-    setOpenMobile?: (open: boolean) => void
-}) {
+export function CandidateSidebarNavItems({ isMobile }: { isMobile?: boolean }) {
     const pathname = usePathname()
-
     return (
-        <SidebarMenu>
+        <nav className="grid gap-1 px-4">
             {candidateNavItems.map((item) => {
-                const isActive = pathname === item.url || pathname.startsWith(item.url + "/")
+                const isActive = pathname === item.url || (item.url !== "/candidate/dashboard" && pathname.startsWith(item.url))
                 return (
-                    <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-                            <Link href={item.url} className="py-4 px-3 text-primary " onClick={() => {
-                                if (isMobile && setOpenMobile) {
-                                    setOpenMobile(false)
-                                }
-                            }}>
-                                <item.icon className="h-4 w-4" />
-                                <span>{item.title}</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <Link
+                        key={item.url}
+                        href={item.url}
+                        className={cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-2 font-medium transition-all hover:text-primary",
+                            isMobile ? "text-base py-3" : "text-sm",
+                            isActive
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:bg-muted"
+                        )}
+                    >
+                        <item.icon className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
+                        {item.title}
+                    </Link>
                 )
             })}
-        </SidebarMenu>
+        </nav>
     )
 }
 
 export function AppCandidateSidebar() {
     return (
-        <Sidebar variant="inset" className="hidden md:flex ">
-            <SidebarHeader className="flex h-14 items-left justify-center border-b px-4 lg:h-[60px] shrink-0">
-                <Link href="/candidate/dashboard" className="flex items-center gap-2 font-semibold">
+        <aside className="hidden w-64 shrink-0 flex-col border-r bg-background md:flex">
+            <div className="flex h-14 items-center border-b px-6">
+                <div className="flex items-center gap-2 font-bold tracking-tight text-lg text-primary">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                         <User className="h-5 w-5" />
                     </div>
-                    <span className="text-xl font-bold tracking-tight">Recruit Sphere</span>
-                </Link>
-            </SidebarHeader>
-            <SidebarContent className="py-4">
+                    Recruit Sphere
+                </div>
+            </div>
+            <div className="flex-1 overflow-auto py-4">
                 <CandidateSidebarNavItems />
-            </SidebarContent>
-            <SidebarFooter className="border-t p-4 shrink-0">
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <form action={logout}>
-                            <SidebarMenuButton asChild tooltip="Logout" className="text-muted-foreground w-full hover:text-destructive transition-colors cursor-pointer">
-                                <button type="submit">
-                                    <LogOut className="h-4 w-4" />
-                                    <span>Logout</span>
-                                </button>
-                            </SidebarMenuButton>
-                        </form>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarFooter>
-        </Sidebar>
+            </div>
+
+            <div className="mt-auto border-t p-4">
+                <nav className="grid gap-1">
+                    <form action={logout}>
+                        <button
+                            type="submit"
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-500 transition-all hover:bg-red-500/10 cursor-pointer"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            Logout
+                        </button>
+                    </form>
+                </nav>
+            </div>
+        </aside>
     )
 }

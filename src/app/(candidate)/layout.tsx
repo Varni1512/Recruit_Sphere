@@ -1,6 +1,5 @@
 import { AppCandidateSidebar } from "@/components/candidate/sidebar"
 import { CandidateHeader } from "@/components/candidate/header"
-import { SidebarProvider } from "@/components/ui/sidebar"
 
 export default function CandidateLayout({
     children,
@@ -8,16 +7,14 @@ export default function CandidateLayout({
     children: React.ReactNode
 }) {
     return (
-        <SidebarProvider>
-            <div className="flex h-screen overflow-hidden w-full bg-background text-foreground">
-                <AppCandidateSidebar />
-                <div className="flex w-full flex-col flex-1 min-w-0">
-                    <CandidateHeader />
-                    <main className="flex-1 overflow-hidden bg-muted/30 p-2 sm:p-4 md:p-6 lg:p-8">
-                        {children}
-                    </main>
-                </div>
+        <div className="flex h-screen w-full overflow-hidden bg-muted/40 text-foreground transition-colors duration-300">
+            <AppCandidateSidebar />
+            <div className="flex flex-col flex-1 overflow-hidden relative">
+                <CandidateHeader />
+                <main className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden p-4 sm:px-6 sm:pb-6 relative z-0">
+                    {children}
+                </main>
             </div>
-        </SidebarProvider>
+        </div>
     )
 }

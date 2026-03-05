@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
     const path = request.nextUrl.pathname
 
     const isPublicRoute = path === '/login' || path === '/signup'
-    const isCandidateRoute = path.startsWith('/candidate')
+    const isCandidateRoute = path === '/candidate' || path.startsWith('/candidate/')
 
     // Ignore static files, api routes, Next.js internal paths
     if (

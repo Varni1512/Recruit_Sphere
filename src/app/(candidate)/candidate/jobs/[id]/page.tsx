@@ -46,7 +46,7 @@ export default function CandidateJobDetailsPage({ params }: { params: Promise<{ 
 
     if (isApplying) {
         return (
-            <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto h-full overflow-auto pb-8">
+            <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-4">
                 <div className="flex items-center gap-4 shrink-0 mt-4 sm:mt-0">
                     <Button variant="ghost" size="icon" onClick={() => setIsApplying(false)} className="shrink-0 group">
                         <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
@@ -120,7 +120,7 @@ export default function CandidateJobDetailsPage({ params }: { params: Promise<{ 
     }
 
     return (
-        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto h-full overflow-auto pb-8">
+        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 mt-4 sm:mt-0">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" asChild className="shrink-0 group">

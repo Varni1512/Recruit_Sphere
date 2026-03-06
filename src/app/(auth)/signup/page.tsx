@@ -1,6 +1,13 @@
-import Link from "next/link"
-import { Building2 } from "lucide-react"
+"use client"
 
+import Link from "next/link"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth"
+import { doc, setDoc } from "firebase/firestore"
+
+import { auth, db } from "@/lib/firebase"
+import { setRoleCookie } from "@/app/actions/auth"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -14,6 +21,87 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 export default function SignupPage() {
+    const router = useRouter()
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+        setIsLoading(true)
+        setError(null)
+
+        const formData = new FormData(e.currentTarget)
+        const email = formData.get("email") as string
+        const password = formData.get("password") as string
+        const firstName = formData.get("first-name") as string
+        const lastName = formData.get("last-name") as string
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+            const user = userCredential.user
+
+            // Fire-and-forget Firestore write so the UI never hangs if the Database isn't built yet
+            setDoc(doc(db, "users", user.uid), {
+                email,
+                firstName,
+                lastName,
+                role: "candidate",
+                createdAt: new Date()
+            }).catch(e => console.error("Firestore sync error:", e))
+
+            // Set cookie synchronously on client
+            document.cookie = "role=candidate; path=/; max-age=604800"
+            try { await setRoleCookie("candidate") } catch (e) { }
+
+            window.location.href = "/candidate/dashboard"
+        } catch (err: any) {
+            console.error("Firebase Auth Error:", err);
+            if (err.code === "auth/operation-not-allowed") {
+                setError("Email/Password is not enabled. Please enable it in your Firebase Console -> Authentication -> Sign-in methods.");
+            } else if (err.code === "auth/email-already-in-use") {
+                setError("This email is already in use.");
+            } else if (err.code === "auth/weak-password") {
+                setError("Password must be at least 6 characters.");
+            } else {
+                setError(err.message || "Failed to create account. Please try again.")
+            }
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    async function handleProviderSignup(providerName: "google" | "github") {
+        setIsLoading(true)
+        setError(null)
+        try {
+            const provider = providerName === "google" ? new GoogleAuthProvider() : new GithubAuthProvider()
+            const userCredential = await signInWithPopup(auth, provider)
+            const user = userCredential.user
+
+            // Fire-and-forget Firestore write so the UI never hangs
+            setDoc(doc(db, "users", user.uid), {
+                email: user.email,
+                role: "candidate",
+                createdAt: new Date()
+            }, { merge: true }).catch(e => console.error("Firestore sync error:", e))
+
+            // Set cookie synchronously on client
+            document.cookie = "role=candidate; path=/; max-age=604800"
+            try { await setRoleCookie("candidate") } catch (e) { }
+
+            window.location.href = "/candidate/dashboard"
+        } catch (err: any) {
+            console.error("Firebase Auth Error:", err);
+            if (err.code === "auth/operation-not-allowed") {
+                setError(`${providerName === "google" ? "Google" : "GitHub"} Sign-in is not enabled. Please enable it in your Firebase Console -> Authentication -> Sign-in methods.`);
+            } else {
+                setError(err.message || `Failed to sign up with ${providerName}`)
+            }
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     return (
         <>
             <div className="mb-2 flex flex-col items-center justify-center space-y-2 text-center">
@@ -30,78 +118,85 @@ export default function SignupPage() {
                         Enter your details below to create your account
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-3">
-                    <div className="grid grid-cols-2 gap-6 relative">
-                        <Button variant="outline" type="button">
-                            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                                <path
-                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                                    fill="#4285F4"
-                                />
-                                <path
-                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                    fill="#34A853"
-                                />
-                                <path
-                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                                    fill="#FBBC05"
-                                />
-                                <path
-                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                                    fill="#EA4335"
-                                />
-                            </svg>
-                            Google
-                        </Button>
-                        <Button variant="outline" type="button">
-                            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                            </svg>
-                            GitHub
-                        </Button>
-                    </div>
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
+                <form onSubmit={handleSignup}>
+                    <CardContent className="grid gap-3">
+                        <div className="grid grid-cols-2 gap-6 relative">
+                            <Button variant="outline" type="button" onClick={() => handleProviderSignup("google")} disabled={isLoading}>
+                                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                                    <path
+                                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                        fill="#4285F4"
+                                    />
+                                    <path
+                                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                        fill="#34A853"
+                                    />
+                                    <path
+                                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                        fill="#FBBC05"
+                                    />
+                                    <path
+                                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                        fill="#EA4335"
+                                    />
+                                </svg>
+                                Google
+                            </Button>
+                            <Button variant="outline" type="button" onClick={() => handleProviderSignup("github")} disabled={isLoading}>
+                                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                                </svg>
+                                GitHub
+                            </Button>
                         </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">
-                                Or continue with
-                            </span>
+                        <div className="relative my-4">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-background px-2 text-muted-foreground">
+                                    Or continue with
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="first-name">First name</Label>
+                                <Input id="first-name" name="first-name" placeholder="Max" autoComplete="given-name" required className="h-11" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="last-name">Last name</Label>
+                                <Input id="last-name" name="last-name" placeholder="Robinson" autoComplete="family-name" required className="h-11" />
+                            </div>
+                        </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="first-name">First name</Label>
-                            <Input id="first-name" placeholder="Max" required className="h-11" />
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" name="email" type="email" placeholder="m@example.com" autoComplete="email" required className="h-11" />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="last-name">Last name</Label>
-                            <Input id="last-name" placeholder="Robinson" required className="h-11" />
+                            <Label htmlFor="password">Password</Label>
+                            <Input id="password" name="password" type="password" autoComplete="new-password" required className="h-11" />
                         </div>
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="m@example.com" required className="h-11" />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" required className="h-11" />
-                    </div>
-                    {/* <div className="grid gap-2">
-                        <Label htmlFor="company">Company</Label>
-                        <Input id="company" type="text" placeholder="Acme Inc." required className="h-11" />
-                    </div> */}
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4 pb-3 mt-3">
-                    <Button className="w-full h-11 text-base font-medium">Create account</Button>
-                    <div className="text-center text-sm">
-                        Already have an account?{" "}
-                        <Link href="/login" className="font-semibold text-primary hover:underline">
-                            Sign in
-                        </Link>
-                    </div>
-                </CardFooter>
+
+                        {error && (
+                            <div className="text-sm font-medium text-destructive mt-1">
+                                {error}
+                            </div>
+                        )}
+                    </CardContent>
+                    <CardFooter className="flex flex-col gap-4 pb-3 mt-3">
+                        <Button className="w-full h-11 text-base font-medium" type="submit" disabled={isLoading}>
+                            {isLoading ? "Creating account..." : "Create account"}
+                        </Button>
+                        <div className="text-center text-sm">
+                            Already have an account?{" "}
+                            <Link href="/login" className="font-semibold text-primary hover:underline">
+                                Sign in
+                            </Link>
+                        </div>
+                    </CardFooter>
+                </form>
             </Card>
         </>
     )

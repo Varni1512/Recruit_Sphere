@@ -3,7 +3,9 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Briefcase, Calendar as CalendarIcon, FileText, Home, LogOut, User } from "lucide-react"
-import { logout } from "@/app/actions/auth"
+import { deleteRoleCookie } from "@/app/actions/auth"
+import { auth } from "@/lib/firebase"
+import { signOut } from "firebase/auth"
 
 import { cn } from "@/lib/utils"
 
@@ -79,15 +81,17 @@ export function AppCandidateSidebar() {
 
             <div className="mt-auto border-t p-4">
                 <nav className="grid gap-1">
-                    <form action={logout}>
-                        <button
-                            type="submit"
-                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-500 transition-all hover:bg-red-500/10 cursor-pointer"
-                        >
-                            <LogOut className="h-4 w-4" />
-                            Logout
-                        </button>
-                    </form>
+                    <button
+                        onClick={async () => {
+                            await signOut(auth)
+                            await deleteRoleCookie()
+                            window.location.href = "/login"
+                        }}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-500 transition-all hover:bg-red-500/10 cursor-pointer"
+                    >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                    </button>
                 </nav>
             </div>
         </aside>

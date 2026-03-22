@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Building2, Calendar, MapPin, Search } from "lucide-react"
 import Link from "next/link"
 
@@ -22,83 +24,95 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-
-export const availableJobs = [
-    {
-        id: "1",
-        title: "Senior Product Designer",
-        company: "Acme Corp",
-        location: "New York, NY (Hybrid)",
-        type: "Full-time",
-        experience: "Senior",
-        salary: "$130k - $160k",
-        posted: "2 hours ago",
-        tags: ["Figma", "Design Systems", "UX Research"],
-        description: "We are looking for an experienced Senior Product Designer to join our dynamic team and lead the design of our core platform features."
-    },
-    {
-        id: "2",
-        title: "Frontend Engineer",
-        company: "Stark Industries",
-        location: "Remote",
-        type: "Full-time",
-        experience: "Mid-Level",
-        salary: "$110k - $140k",
-        posted: "5 hours ago",
-        tags: ["React", "TypeScript", "Next.js"],
-        description: "Join Stark Industries to build cutting-edge web applications using modern technologies like React and Next.js."
-    },
-    {
-        id: "3",
-        title: "Marketing Manager",
-        company: "Wayne Enterprises",
-        location: "Gotham City (On-site)",
-        type: "Full-time",
-        experience: "Mid-Level",
-        salary: "$90k - $120k",
-        posted: "1 day ago",
-        tags: ["Growth", "B2B", "Content"],
-        description: "Lead our B2B marketing initiatives and grow our enterprise customer base through strategic campaigns."
-    },
-    {
-        id: "4",
-        title: "DevOps Engineer",
-        company: "Globex",
-        location: "Remote",
-        type: "Contract",
-        experience: "Senior",
-        salary: "$80 - $120 / hr",
-        posted: "2 days ago",
-        tags: ["AWS", "Kubernetes", "CI/CD"],
-        description: "Help us scale our infrastructure and improve our deployment pipelines across our global architecture."
-    },
-    {
-        id: "5",
-        title: "Junior Data Analyst",
-        company: "Initech",
-        location: "Austin, TX (Hybrid)",
-        type: "Full-time",
-        experience: "Entry",
-        salary: "$65k - $85k",
-        posted: "3 days ago",
-        tags: ["SQL", "Python", "Tableau"],
-        description: "Analyze user behavior data to help our product team make informed decisions and improve our metrics."
-    },
-    {
-        id: "6",
-        title: "VP of Engineering",
-        company: "Umbrella Corp",
-        location: "Remote",
-        type: "Full-time",
-        experience: "Director",
-        salary: "$180k - $220k",
-        posted: "1 week ago",
-        tags: ["Leadership", "Cloud", "Strategy"],
-        description: "Lead a global engineering organization of 50+ engineers to deliver scalable healthcare solutions."
-    },
-]
+import { availableJobs } from "@/lib/dummyData"
+import { auth } from "@/lib/firebase"
+import { getUserProfile, calculateProfileCompletion } from "@/lib/profileUtils"
 
 export default function CandidateJobsPage() {
+    const router = useRouter()
+    const [checkingAccess, setCheckingAccess] = useState(true)
+    const [canAccess, setCanAccess] = useState(false)
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                router.push("/login")
+                return
+            }
+
+            try {
+                const cacheKey = `candidateProfile_${user.uid}`
+                let completionFromCache: number | null = null
+
+                try {
+                    if (typeof window !== "undefined") {
+                        const cachedRaw = localStorage.getItem(cacheKey)
+                        if (cachedRaw) {
+                            const cached = JSON.parse(cachedRaw) as { profile?: any; completion?: number }
+                            if (typeof cached.completion === "number") {
+                                completionFromCache = cached.completion
+                            } else if (cached.profile) {
+                                completionFromCache = calculateProfileCompletion(cached.profile)
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error reading cached profile for jobs page", error)
+                }
+
+                // If cache confidently says 80%+, allow immediately
+                if (completionFromCache !== null && completionFromCache >= 80) {
+                    setCanAccess(true)
+                    setCheckingAccess(false)
+                    return
+                }
+
+                // Fallback to Firestore check
+                const profile = await getUserProfile(user.uid)
+                const completion = calculateProfileCompletion(profile)
+
+                if (completion >= 80) {
+                    setCanAccess(true)
+                    try {
+                        if (typeof window !== "undefined") {
+                            localStorage.setItem(
+                                cacheKey,
+                                JSON.stringify({
+                                    profile,
+                                    completion,
+                                })
+                            )
+                        }
+                    } catch (error) {
+                        console.error("Error caching profile for jobs page", error)
+                    }
+                } else {
+                    alert("Please complete at least 80% of your profile before browsing jobs.")
+                    router.push("/candidate/profile")
+                }
+            } catch (error) {
+                console.error("Error checking profile completion for jobs page", error)
+                router.push("/candidate/profile")
+            } finally {
+                setCheckingAccess(false)
+            }
+        })
+
+        return () => unsubscribe()
+    }, [router])
+
+    if (checkingAccess && !canAccess) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                Checking your profile completion...
+            </div>
+        )
+    }
+
+    if (!canAccess) {
+        return null
+    }
+
     return (
         <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">

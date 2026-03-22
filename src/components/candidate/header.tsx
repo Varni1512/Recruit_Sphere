@@ -2,7 +2,9 @@
 
 import { Bell, Menu, Search, User } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { auth } from "@/lib/firebase"
+import type { User as FirebaseUser } from "firebase/auth"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +23,13 @@ import { CandidateSidebarNavItems } from "@/components/candidate/sidebar"
 
 export function CandidateHeader() {
     const [open, setOpen] = useState(false)
+    const [user, setUser] = useState<FirebaseUser | null>(null)
+
+    useEffect(() => {
+        return auth.onAuthStateChanged((u) => {
+            setUser(u)
+        })
+    }, [])
 
     return (
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 mt-0 sm:mt-4">
@@ -90,7 +99,7 @@ export function CandidateHeader() {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src="https://avatar.vercel.sh/alex.png" alt="Candidate Avatar" />
+                                <AvatarImage src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName || user?.email || 'Candidate'}&background=random`} alt="Candidate Avatar" />
                                 <AvatarFallback>CA</AvatarFallback>
                             </Avatar>
                         </Button>
@@ -98,9 +107,9 @@ export function CandidateHeader() {
                     <DropdownMenuContent align="end" forceMount>
                         <DropdownMenuLabel className="font-normal">
                             <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">Alex Candidate</p>
+                                <p className="text-sm font-medium leading-none">{user?.displayName || "Candidate User"}</p>
                                 <p className="text-xs leading-none text-muted-foreground">
-                                    alex@example.com
+                                    {user?.email || ""}
                                 </p>
                             </div>
                         </DropdownMenuLabel>

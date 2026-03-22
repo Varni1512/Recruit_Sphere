@@ -1,7 +1,7 @@
 "use client"
 
+import { useEffect, useState, use } from "react"
 import { MapPin, Briefcase, DollarSign, Calendar, Building2, CheckCircle2, ArrowLeft, Upload, FileText, ExternalLink } from "lucide-react"
-import { useState, use } from "react"
 import dynamic from 'next/dynamic'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
@@ -21,16 +21,98 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { availableJobs } from "../page"
+import { availableJobs } from "@/lib/dummyData"
+import { auth } from "@/lib/firebase"
+import { getUserProfile, calculateProfileCompletion } from "@/lib/profileUtils"
 
 export default function CandidateJobDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
     const router = useRouter()
     const [isApplying, setIsApplying] = useState(false)
     const [coverLetter, setCoverLetter] = useState("")
+    const [checkingAccess, setCheckingAccess] = useState(true)
+    const [canAccess, setCanAccess] = useState(false)
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                router.push("/login")
+                return
+            }
+
+            try {
+                const cacheKey = `candidateProfile_${user.uid}`
+                let completionFromCache: number | null = null
+
+                try {
+                    if (typeof window !== "undefined") {
+                        const cachedRaw = localStorage.getItem(cacheKey)
+                        if (cachedRaw) {
+                            const cached = JSON.parse(cachedRaw) as { profile?: any; completion?: number }
+                            if (typeof cached.completion === "number") {
+                                completionFromCache = cached.completion
+                            } else if (cached.profile) {
+                                completionFromCache = calculateProfileCompletion(cached.profile)
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error reading cached profile for job details page", error)
+                }
+
+                if (completionFromCache !== null && completionFromCache >= 80) {
+                    setCanAccess(true)
+                    setCheckingAccess(false)
+                    return
+                }
+
+                const profile = await getUserProfile(user.uid)
+                const completion = calculateProfileCompletion(profile)
+
+                if (completion >= 80) {
+                    setCanAccess(true)
+                    try {
+                        if (typeof window !== "undefined") {
+                            localStorage.setItem(
+                                cacheKey,
+                                JSON.stringify({
+                                    profile,
+                                    completion,
+                                })
+                            )
+                        }
+                    } catch (error) {
+                        console.error("Error caching profile for job details page", error)
+                    }
+                } else {
+                    alert("Please complete at least 80% of your profile before viewing job details.")
+                    router.push("/candidate/profile")
+                }
+            } catch (error) {
+                console.error("Error checking profile completion for job details page", error)
+                router.push("/candidate/profile")
+            } finally {
+                setCheckingAccess(false)
+            }
+        })
+
+        return () => unsubscribe()
+    }, [router])
 
     // Find the specific job from the shared mock data
     const job = availableJobs.find(j => j.id === id)
+
+    if (checkingAccess && !canAccess) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                Checking your profile completion...
+            </div>
+        )
+    }
+
+    if (!canAccess) {
+        return null
+    }
 
     if (!job) {
         return (

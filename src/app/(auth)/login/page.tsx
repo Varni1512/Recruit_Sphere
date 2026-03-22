@@ -26,8 +26,6 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null)
 
     async function processLoginAndRedirect(user: any) {
-        // Since Firebase Auth is now Candidate-only (recruiter uses hardcoded bypass),
-        // we completely skip awaiting Firestore getDoc which was hanging the UI.
         const role = "candidate"
 
         // Set cookie instantly on the client to bypass any Next.js Server Action hangups
@@ -39,7 +37,18 @@ export default function LoginPage() {
             console.error("Server action cookie set failed, relying on client cookie", e)
         }
 
-        window.location.href = "/candidate/dashboard"
+        // After sign-in always take candidate to their profile.
+        // Access to other candidate pages will be gated based on profile completion.
+        try {
+            // Optional: warm up profile data / completion check (no redirect decision here).
+            const { getUserProfile, calculateProfileCompletion } = await import('@/lib/profileUtils');
+            await getUserProfile(user.uid);
+            // We intentionally do not use completion here; gating happens on destination pages.
+        } catch (e) {
+            console.error("Error preloading profile data", e);
+        } finally {
+            window.location.href = "/candidate/profile";
+        }
     }
 
     async function handleLogin(e: React.FormEvent<HTMLFormElement>) {

@@ -23,54 +23,36 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 
-const myApplications = [
-    {
-        id: "1",
-        role: "Senior UX Designer",
-        company: "Acme Corp",
-        appliedDate: "Oct 24, 2026",
-        status: "Screening",
-        location: "New York, NY",
-        resumeScore: 92,
-        pipeline: ["Applied", "Screened", "Interview", "Offer", "Hired"],
-        currentStageIndex: 1, // Screened
-    },
-    {
-        id: "2",
-        role: "Product Manager",
-        company: "Globex",
-        appliedDate: "Oct 18, 2026",
-        status: "Applied",
-        location: "Remote",
-        resumeScore: 78,
-        pipeline: ["Applied", "Screened", "Interview", "Offer", "Hired"],
-        currentStageIndex: 0, // Applied
-    },
-    {
-        id: "3",
-        role: "Full Stack Engineer",
-        company: "Initech",
-        appliedDate: "Oct 10, 2026",
-        status: "Interviewing",
-        location: "Austin, TX",
-        resumeScore: 88,
-        pipeline: ["Applied", "Screened", "Technical", "Culture Fit", "Offer"],
-        currentStageIndex: 2, // Technical
-    },
-    {
-        id: "4",
-        role: "Security Researcher",
-        company: "Umbrella Corp",
-        appliedDate: "Oct 01, 2026",
-        status: "Rejected",
-        location: "Remote",
-        resumeScore: 85,
-        pipeline: ["Applied", "Screened", "Technical", "Offer"],
-        currentStageIndex: 1, // Stopped at Screened
-    }
-]
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { auth } from "@/lib/localAuth"
+import { getCandidateApplications } from "@/app/actions/jobActions"
 
 export default function CandidateApplicationsPage() {
+    const router = useRouter()
+    const [myApplications, setMyApplications] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                router.push("/login")
+                return
+            }
+
+            const res = await getCandidateApplications(user.uid)
+            if (res.success) {
+                setMyApplications(res.applications)
+            }
+            setLoading(false)
+        })
+        return () => unsubscribe()
+    }, [router])
+
+    if (loading) {
+        return <div className="flex h-[50vh] flex-col items-center justify-center text-muted-foreground">Loading your applications...</div>
+    }
+
     return (
         <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
@@ -151,7 +133,7 @@ export default function CandidateApplicationsPage() {
                                                     style={{ width: `${(app.currentStageIndex / (app.pipeline.length - 1)) * 80}%` }}
                                                 />
 
-                                                {app.pipeline.map((stage, i) => {
+                                                {app.pipeline.map((stage: string, i: number) => {
                                                     const isCompleted = i <= app.currentStageIndex
                                                     const isCurrent = i === app.currentStageIndex
                                                     const isRejected = app.status === 'Rejected'
@@ -181,7 +163,7 @@ export default function CandidateApplicationsPage() {
 
                                         <div className="flex items-center gap-2 mt-auto">
                                             <Button variant="outline" size="sm" className="flex-1 text-xs" asChild>
-                                                <Link href={`/candidate/jobs/${app.id}`}>View Original Job</Link>
+                                                <Link href={`/candidate/jobs/${app.jobId}`}>View Original Job</Link>
                                             </Button>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>

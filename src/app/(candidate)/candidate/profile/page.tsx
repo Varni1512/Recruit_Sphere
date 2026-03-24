@@ -532,7 +532,7 @@ export default function CandidateProfilePage() {
                                     <div className="flex items-center gap-3">
                                         <FileText className="h-8 w-8 text-primary shrink-0" />
                                         <div className="flex flex-col min-w-0">
-                                            <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline text-primary">
+                                            <a href={resumeUrl.startsWith("http") ? `/api/proxy-pdf?url=${encodeURIComponent(resumeUrl)}` : resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline text-primary">
                                                 {resumeName || "Candidate Resume"}
                                             </a>
                                             <p className="text-xs text-muted-foreground">Attached</p>
@@ -549,19 +549,13 @@ export default function CandidateProfilePage() {
                                                 <DialogHeader className="p-4 border-b shrink-0 flex flex-row items-center justify-between">
                                                     <DialogTitle>Resume Preview</DialogTitle>
                                                     <Button size="sm" asChild className="mr-6">
-                                                        <a href={resumeUrl} target="_blank" rel="noopener noreferrer" download>
+                                                        <a href={resumeUrl.startsWith("http") ? `/api/proxy-pdf?url=${encodeURIComponent(resumeUrl)}` : resumeUrl} download="resume.pdf" target="_blank" rel="noopener noreferrer">
                                                             <Download className="h-4 w-4 mr-2" /> Download Document
                                                         </a>
                                                     </Button>
                                                 </DialogHeader>
                                                 <div className="flex-1 overflow-hidden" style={{ minHeight: "50vh" }}>
-                                                    {resumeUrl.startsWith("blob:") ? (
-                                                        <iframe src={resumeUrl} className="w-full h-full border-0" title="Resume Preview" />
-                                                    ) : resumeName?.toLowerCase().endsWith(".pdf") || resumeUrl?.toLowerCase().includes(".pdf") ? (
-                                                        <iframe src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(resumeUrl)}`} className="w-full h-full border-0" title="Resume Preview" />
-                                                    ) : (
-                                                        <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(resumeUrl)}&embedded=true`} className="w-full h-full border-0" title="Resume Preview" />
-                                                    )}
+                                                    <iframe src={resumeUrl.startsWith("http") ? `/api/proxy-pdf?url=${encodeURIComponent(resumeUrl)}` : resumeUrl} className="w-full h-full border-0 bg-white" title="Resume Preview" />
                                                 </div>
                                             </DialogContent>
                                         </Dialog>

@@ -125,6 +125,7 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
             try {
                 const cacheKey = `candidateProfile_${user.uid}`
                 let completionFromCache: number | null = null
+                let cachedProfile: any = null
 
                 try {
                     if (typeof window !== "undefined") {
@@ -136,14 +137,28 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
                             } else if (cached.profile) {
                                 completionFromCache = calculateProfileCompletion(cached.profile)
                             }
+                            if (cached.profile) {
+                                cachedProfile = cached.profile
+                            }
                         }
                     }
                 } catch (error) {
                     console.error("Error reading cached profile for job details page", error)
                 }
 
+                setEmail(user.email || "")
+
                 if (completionFromCache !== null && completionFromCache >= 80) {
                     setCanAccess(true)
+                    if (cachedProfile) {
+                        const names = (cachedProfile.fullName || "").split(" ")
+                        setFirstName(names[0] || "")
+                        setLastName(names.slice(1).join(" ") || "")
+                        setMobile(cachedProfile.phone || "")
+                        setAddress(cachedProfile.currentLocation || "")
+                        setLinkedinLink(cachedProfile.linkedin || "")
+                        setGithubLink(cachedProfile.github || "")
+                    }
                     setCheckingAccess(false)
                     return
                 }
@@ -157,7 +172,10 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
                         const names = (profile?.fullName || "").split(" ")
                         setFirstName(names[0] || "")
                         setLastName(names.slice(1).join(" ") || "")
-                        setEmail(user.email || "")
+                        setMobile(profile?.phone || "")
+                        setAddress((profile as any)?.currentLocation || "")
+                        setLinkedinLink(profile?.linkedin || "")
+                        setGithubLink(profile?.github || "")
 
                         if (typeof window !== "undefined") {
                             localStorage.setItem(

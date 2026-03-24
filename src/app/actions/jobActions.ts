@@ -193,3 +193,84 @@ export async function applyToJob(data: any) {
         return { success: false, error: error.message }
     }
 }
+
+export async function getAllApplications() {
+    try {
+        await connectToDatabase()
+        const apps = await Application.find().sort({ createdAt: -1 }).lean()
+        
+        // Fetch corresponding jobs
+        const jobs = await Job.find({ _id: { $in: apps.map(a => a.jobId) } }).lean()
+        const jobMap = jobs.reduce((acc, job) => {
+            acc[job._id.toString()] = job.title;
+            return acc;
+        }, {} as Record<string, string>);
+
+        return {
+            success: true,
+            applications: apps.map((app: any) => ({
+                id: app._id.toString(),
+                jobId: app.jobId,
+                role: jobMap[app.jobId] || "Unknown Role",
+                name: `${app.firstName} ${app.lastName}`,
+                email: app.email,
+                mobile: app.mobile,
+                location: app.address || "Unknown",
+                status: app.status || "Applied",
+                score: Math.floor(Math.random() * 20) + 80, // Mock score for now
+                collegeYear: app.collegeYear,
+                collegeBranch: app.collegeBranch,
+                qualifications: app.qualifications,
+                githubLink: app.githubLink || "#",
+                linkedinLink: app.linkedinLink || "#",
+                codolioLink: app.codolioLink || "#",
+                website: app.website || "#",
+                resumeUrl: app.resumeUrl || "#",
+                appliedAt: app.createdAt ? formatDistanceToNow(new Date(app.createdAt), { addSuffix: true }) : "recently",
+            }))
+        }
+    } catch (error: any) {
+        console.error("Failed to fetch applications:", error)
+        return { success: false, error: error.message, applications: [] }
+    }
+}
+
+export async function getCandidateApplications(candidateId: string) {
+    try {
+        await connectToDatabase()
+        const apps = await Application.find({ candidateId }).sort({ createdAt: -1 }).lean()
+        
+        // Fetch corresponding jobs
+        const jobs = await Job.find({ _id: { $in: apps.map(a => a.jobId) } }).lean()
+        const jobMap = jobs.reduce((acc, job) => {
+            acc[job._id.toString()] = job;
+            return acc;
+        }, {} as Record<string, any>);
+
+        return {
+            success: true,
+            applications: apps.map((app: any) => {
+                const job = jobMap[app.jobId];
+                return {
+                    id: app._id.toString(),
+                    jobId: app.jobId,
+                    role: job?.title || "Unknown Role",
+                    company: job?.company === "Acme Corp" ? "Recruit Sphere" : (job?.company || "Recruit Sphere"),
+                    location: job?.location || "Unknown Location",
+                    appliedDate: app.createdAt ? formatDistanceToNow(new Date(app.createdAt), { addSuffix: true }) : "recently",
+                    status: app.status || "Applied",
+                    resumeScore: Math.floor(Math.random() * 20) + 80, // Mock score
+                    pipeline: ["Applied", "Screened", "Interview", "Offer", "Hired"],
+                    currentStageIndex: app.status === "Applied" ? 0 : 
+                                       app.status === "Interviewing" || app.status === "Screening" || app.status === "Interview" ? 1 : 
+                                       app.status === "Offer" ? 3 : 
+                                       app.status === "Hired" ? 4 : 
+                                       app.status === "Rejected" ? 1 : 0, 
+                }
+            })
+        }
+    } catch (error: any) {
+        console.error("Failed to fetch candidate applications:", error)
+        return { success: false, error: error.message, applications: [] }
+    }
+}

@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { auth, updateProfile } from "@/lib/localAuth"
 import { getUserProfile, calculateProfileCompletion, saveUserProfile, type Experience } from "@/lib/profileUtils"
+import { uploadToCloudinary } from "@/app/actions/uploadActions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
     Card,
@@ -230,17 +231,23 @@ export default function CandidateProfilePage() {
         if (!file) return
 
         setIsUploading(true)
-        // Mock upload with local blob URL
-        setTimeout(() => {
-            try {
-                const url = URL.createObjectURL(file)
-                setPhotoUrl(url)
-            } catch (error) {
-                console.error("Error creating local URL", error)
-            } finally {
-                setIsUploading(false)
+        try {
+            const formData = new FormData()
+            formData.append("file", file)
+            const result = await uploadToCloudinary(formData)
+
+            if ('url' in result && result.url) {
+                setPhotoUrl(result.url)
+            } else {
+                console.error("Upload failed", result)
+                alert("Failed to upload photo")
             }
-        }, 800)
+        } catch (error) {
+            console.error("Error uploading to Cloudinary", error)
+            alert("Failed to upload photo")
+        } finally {
+            setIsUploading(false)
+        }
     }
 
     const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -248,18 +255,24 @@ export default function CandidateProfilePage() {
         if (!file) return
 
         setIsUploadingResume(true)
-        // Mock upload with local blob URL
-        setTimeout(() => {
-            try {
-                const url = URL.createObjectURL(file)
-                setResumeUrl(url)
-                setResumeName(file.name)
-            } catch (error) {
-                console.error("Error creating local URL", error)
-            } finally {
-                setIsUploadingResume(false)
+        try {
+            const formData = new FormData()
+            formData.append("file", file)
+            const result = await uploadToCloudinary(formData)
+
+            if ('url' in result && result.url) {
+                setResumeUrl(result.url)
+                setResumeName(result.name || file.name)
+            } else {
+                console.error("Upload failed", result)
+                alert("Failed to upload resume")
             }
-        }, 800)
+        } catch (error) {
+            console.error("Error uploading to Cloudinary", error)
+            alert("Failed to upload resume")
+        } finally {
+            setIsUploadingResume(false)
+        }
     }
 
     const handleRemoveResume = () => {

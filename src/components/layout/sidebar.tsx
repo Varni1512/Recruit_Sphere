@@ -14,8 +14,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { deleteRoleCookie } from "@/app/actions/auth"
-import { auth } from "@/lib/firebase"
-import { signOut } from "firebase/auth"
+import { auth, signOut } from "@/lib/localAuth"
 
 const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },

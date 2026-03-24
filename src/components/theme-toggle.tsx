@@ -18,6 +18,7 @@ export function ThemeToggle() {
             variant="outline"
             size="icon"
             onClick={toggleTheme}
+            type="button"
             aria-label="Toggle theme"
             aria-pressed={theme === "dark"}
         >

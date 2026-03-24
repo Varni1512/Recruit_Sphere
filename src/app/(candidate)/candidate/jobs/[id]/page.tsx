@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { availableJobs } from "@/lib/dummyData"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/lib/localAuth"
 import { getUserProfile, calculateProfileCompletion } from "@/lib/profileUtils"
 
 export default function CandidateJobDetailsPage({ params }: { params: Promise<{ id: string }> }) {

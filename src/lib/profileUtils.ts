@@ -1,5 +1,4 @@
-import { db } from "./firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { getProfileFromDb, updateProfileInDb } from "@/app/actions/profileActions"
 
 export interface Experience {
     id: string;
@@ -48,13 +47,15 @@ export const calculateProfileCompletion = (profile: Partial<CandidateProfile> | 
 
 export const getUserProfile = async (uid: string): Promise<Partial<CandidateProfile> | null> => {
     try {
-        const docRef = doc(db, "candidates", uid);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            return docSnap.data() as Partial<CandidateProfile>;
+        const dbRes = await getProfileFromDb(uid);
+        if (dbRes.success && dbRes.profile) {
+            return dbRes.profile;
         }
-        return null;
+
+        if (typeof window === "undefined") return null;
+        const raw = localStorage.getItem(`candidate_profile_${uid}`);
+        if (!raw) return null;
+        return JSON.parse(raw) as Partial<CandidateProfile>;
     } catch (error) {
         console.error("Error fetching user profile:", error);
         return null;
@@ -63,9 +64,16 @@ export const getUserProfile = async (uid: string): Promise<Partial<CandidateProf
 
 export const saveUserProfile = async (uid: string, profileData: Partial<CandidateProfile>) => {
     try {
-        const docRef = doc(db, "candidates", uid);
-        await setDoc(docRef, profileData, { merge: true });
-        return true;
+        const dbRes = await updateProfileInDb(uid, profileData);
+
+        if (typeof window !== "undefined") {
+            const raw = localStorage.getItem(`candidate_profile_${uid}`);
+            const existing = raw ? JSON.parse(raw) : {};
+            const merged = { ...existing, ...profileData };
+            localStorage.setItem(`candidate_profile_${uid}`, JSON.stringify(merged));
+        }
+
+        return dbRes.success ?? true;
     } catch (error) {
         console.error("Error saving user profile:", error);
         return false;

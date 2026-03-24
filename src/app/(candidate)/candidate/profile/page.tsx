@@ -1,15 +1,20 @@
 "use client"
 
-import { Building2, Calendar as CalendarIcon, FileText, Link as LinkIcon, MapPin, Plus, Save, Trash2, Upload, Eye, Download } from "lucide-react"
+import { Building2, Calendar as CalendarIcon, FileText, Link as LinkIcon, MapPin, Plus, Save, Trash2, Upload, Eye, Download, Linkedin, Github } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import dynamic from 'next/dynamic'
 
-const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
+const MDEditor = dynamic(() => import('@uiw/react-md-editor'), {
+    ssr: false,
+    // Fast placeholder so the page layout appears immediately.
+    loading: () => (
+        <div className="w-full h-[200px] rounded-md bg-muted/40 animate-pulse" />
+    ),
+})
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { auth } from "@/lib/firebase"
-import { updateProfile } from "firebase/auth"
+import { auth, updateProfile } from "@/lib/localAuth"
 import { getUserProfile, calculateProfileCompletion, saveUserProfile, type Experience } from "@/lib/profileUtils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
@@ -59,53 +64,98 @@ export default function CandidateProfilePage() {
     const router = useRouter()
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                setEmail(user.email || "")
-                const cacheKey = `candidateProfile_${user.uid}`
+        // Avoid double-loading when auth state first hydrates.
+        let loadingUid: string | null = null
 
-                // Try to hydrate from local cache first for instant UI
-                try {
-                    if (typeof window !== "undefined") {
-                        const cachedRaw = localStorage.getItem(cacheKey)
-                        if (cachedRaw) {
-                            const cached = JSON.parse(cachedRaw) as { profile?: any; completion?: number }
-                            const cachedProfile = cached.profile
-                            const cachedCompletion = cached.completion
-                            if (cachedProfile) {
-                                setFullName(cachedProfile.fullName || "")
-                                setPhone(cachedProfile.phone || "")
-                                setLocation(cachedProfile.location || "")
-                                setSummary(cachedProfile.summary || "")
-                                setSkills(cachedProfile.skills || [])
-                                setPortfolio(cachedProfile.portfolio || "")
-                                setLinkedin(cachedProfile.linkedin || "")
-                                setGithub(cachedProfile.github || "")
-                                setPhotoUrl(cachedProfile.photoUrl || "")
-                                setResumeUrl(cachedProfile.resumeUrl || "")
-                                setResumeName(cachedProfile.resumeName || "")
-                                setExperiences(cachedProfile.experiences || [])
+        // 0) Super-fast cache hydrate (before auth listener fires)
+        try {
+            if (typeof window !== "undefined" && !loadingUid) {
+                const lastUid = localStorage.getItem("candidateLastUid")
+                if (lastUid) {
+                    const cacheKey = `candidateProfile_${lastUid}`
+                    const cachedRaw = localStorage.getItem(cacheKey)
+                    if (cachedRaw) {
+                        const cached = JSON.parse(cachedRaw) as { profile?: any; completion?: number }
+                        const cachedProfile = cached.profile
+                        const cachedCompletion = cached.completion
+                        if (cachedProfile) {
+                            setFullName(cachedProfile.fullName || "")
+                            setPhone(cachedProfile.phone || "")
+                            setLocation(cachedProfile.location || "")
+                            setSummary(cachedProfile.summary || "")
+                            setSkills(cachedProfile.skills || [])
+                            setPortfolio(cachedProfile.portfolio || "")
+                            setLinkedin(cachedProfile.linkedin || "")
+                            setGithub(cachedProfile.github || "")
+                            setPhotoUrl(cachedProfile.photoUrl || "")
+                            setResumeUrl(cachedProfile.resumeUrl || "")
+                            setResumeName(cachedProfile.resumeName || "")
+                            setExperiences(cachedProfile.experiences || [])
 
-                                const completionFromCache =
-                                    typeof cachedCompletion === "number"
-                                        ? cachedCompletion
-                                        : calculateProfileCompletion(cachedProfile)
+                            const completionFromCache =
+                                typeof cachedCompletion === "number"
+                                    ? cachedCompletion
+                                    : calculateProfileCompletion(cachedProfile)
 
-                                setCompletionPercentage(completionFromCache)
-
-                                if (completionFromCache > 0) {
-                                    setIsEditing(false)
-                                }
-
-                                setIsLoading(false)
-                            }
+                            setCompletionPercentage(completionFromCache)
+                            if (completionFromCache > 0) setIsEditing(false)
+                            setIsLoading(false)
                         }
                     }
-                } catch (error) {
-                    console.error("Error reading cached profile", error)
                 }
+            }
+        } catch (error) {
+            console.error("Error hydrating profile from lastUid cache", error)
+        }
 
-                // Always refresh from Firestore in the background
+        const loadProfile = async (user: any) => {
+            if (!user?.uid) return
+            if (loadingUid === user.uid) return
+            loadingUid = user.uid
+
+            setEmail(user.email || "")
+            const cacheKey = `candidateProfile_${user.uid}`
+
+            // 1) Instant UI: hydrate from local cache
+            try {
+                if (typeof window !== "undefined") {
+                    const cachedRaw = localStorage.getItem(cacheKey)
+                    if (cachedRaw) {
+                        const cached = JSON.parse(cachedRaw) as { profile?: any; completion?: number }
+                        const cachedProfile = cached.profile
+                        const cachedCompletion = cached.completion
+
+                        if (cachedProfile) {
+                            setFullName(cachedProfile.fullName || "")
+                            setPhone(cachedProfile.phone || "")
+                            setLocation(cachedProfile.location || "")
+                            setSummary(cachedProfile.summary || "")
+                            setSkills(cachedProfile.skills || [])
+                            setPortfolio(cachedProfile.portfolio || "")
+                            setLinkedin(cachedProfile.linkedin || "")
+                            setGithub(cachedProfile.github || "")
+                            setPhotoUrl(cachedProfile.photoUrl || "")
+                            setResumeUrl(cachedProfile.resumeUrl || "")
+                            setResumeName(cachedProfile.resumeName || "")
+                            setExperiences(cachedProfile.experiences || [])
+
+                            const completionFromCache =
+                                typeof cachedCompletion === "number"
+                                    ? cachedCompletion
+                                    : calculateProfileCompletion(cachedProfile)
+
+                            setCompletionPercentage(completionFromCache)
+                            if (completionFromCache > 0) setIsEditing(false)
+                            setIsLoading(false)
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error reading cached profile", error)
+            }
+
+            // 2) Refresh in background
+            try {
                 const profile = await getUserProfile(user.uid)
                 if (profile) {
                     setFullName(profile.fullName || "")
@@ -123,11 +173,7 @@ export default function CandidateProfilePage() {
 
                     const completion = calculateProfileCompletion(profile)
                     setCompletionPercentage(completion)
-
-                    if (completion > 0) {
-                        // If they have saved a profile before, default to view mode.
-                        setIsEditing(false)
-                    }
+                    if (completion > 0) setIsEditing(false)
 
                     try {
                         if (typeof window !== "undefined") {
@@ -143,10 +189,25 @@ export default function CandidateProfilePage() {
                         console.error("Error caching profile", error)
                     }
                 }
-            } else {
-                router.push('/login')
+            } catch (error) {
+                console.error("Error refreshing profile", error)
+            } finally {
+                setIsLoading(false)
             }
-            setIsLoading(false)
+        }
+
+        // Start immediately if auth already has a user.
+        const currentUser = auth.currentUser
+        if (currentUser) {
+            loadProfile(currentUser)
+        }
+
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            if (!user) {
+                router.push("/login")
+                return
+            }
+            loadProfile(user)
         })
 
         return () => unsubscribe()
@@ -169,27 +230,17 @@ export default function CandidateProfilePage() {
         if (!file) return
 
         setIsUploading(true)
-        const formData = new FormData()
-        formData.append("file", file)
-
-        try {
-            const res = await fetch(`/api/upload`, {
-                method: "POST",
-                body: formData
-            })
-            const data = await res.json()
-            if (data.secure_url) {
-                setPhotoUrl(data.secure_url)
-            } else {
-                console.error("Upload to local API failed", data)
-                alert("Failed to upload image. Please check console.")
+        // Mock upload with local blob URL
+        setTimeout(() => {
+            try {
+                const url = URL.createObjectURL(file)
+                setPhotoUrl(url)
+            } catch (error) {
+                console.error("Error creating local URL", error)
+            } finally {
+                setIsUploading(false)
             }
-        } catch (error) {
-            console.error("Error uploading photo", error)
-            alert("Error uploading photo")
-        } finally {
-            setIsUploading(false)
-        }
+        }, 800)
     }
 
     const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -197,28 +248,18 @@ export default function CandidateProfilePage() {
         if (!file) return
 
         setIsUploadingResume(true)
-        const formData = new FormData()
-        formData.append("file", file)
-
-        try {
-            const res = await fetch(`/api/upload`, {
-                method: "POST",
-                body: formData
-            })
-            const data = await res.json()
-            if (data.secure_url) {
-                setResumeUrl(data.secure_url)
+        // Mock upload with local blob URL
+        setTimeout(() => {
+            try {
+                const url = URL.createObjectURL(file)
+                setResumeUrl(url)
                 setResumeName(file.name)
-            } else {
-                console.error("Failed to upload resume", data)
-                alert("Failed to upload resume. Please check console.")
+            } catch (error) {
+                console.error("Error creating local URL", error)
+            } finally {
+                setIsUploadingResume(false)
             }
-        } catch (error) {
-            console.error("Error uploading resume", error)
-            alert("Error uploading resume")
-        } finally {
-            setIsUploadingResume(false)
-        }
+        }, 800)
     }
 
     const handleRemoveResume = () => {
@@ -686,7 +727,7 @@ export default function CandidateProfilePage() {
                                 <Label htmlFor="linkedin">LinkedIn Profile</Label>
                                 <div className="flex items-center">
                                     <div className="flex items-center justify-center border border-r-0 rounded-l-md bg-muted px-3 h-10 text-muted-foreground">
-                                        in
+                                        <Linkedin className="h-4 w-4" />
                                     </div>
                                     <Input id="linkedin" className="rounded-l-none" placeholder="linkedin.com/in/" value={linkedin} onChange={e => setLinkedin(e.target.value)} disabled={!isEditing} />
                                 </div>
@@ -695,7 +736,7 @@ export default function CandidateProfilePage() {
                                 <Label htmlFor="github">GitHub Profile</Label>
                                 <div className="flex items-center">
                                     <div className="flex items-center justify-center border border-r-0 rounded-l-md bg-muted px-3 h-10 text-muted-foreground">
-                                        gh
+                                        <Github className="h-5 w-5" />
                                     </div>
                                     <Input id="github" className="rounded-l-none" placeholder="github.com/" value={github} onChange={e => setGithub(e.target.value)} disabled={!isEditing} />
                                 </div>

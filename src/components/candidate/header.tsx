@@ -2,9 +2,8 @@
 
 import { Bell, Menu, Search, User } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
-import { auth } from "@/lib/firebase"
-import type { User as FirebaseUser } from "firebase/auth"
+import { useState, useEffect, useRef } from "react"
+import { auth, type LocalUser } from "@/lib/localAuth"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -15,6 +14,11 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -23,7 +27,19 @@ import { CandidateSidebarNavItems } from "@/components/candidate/sidebar"
 
 export function CandidateHeader() {
     const [open, setOpen] = useState(false)
-    const [user, setUser] = useState<FirebaseUser | null>(null)
+    const [user, setUser] = useState<LocalUser | null>(null)
+    const [showNotifications, setShowNotifications] = useState(false)
+    const notificationRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+                setShowNotifications(false)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
 
     useEffect(() => {
         return auth.onAuthStateChanged((u) => {
@@ -69,31 +85,33 @@ export function CandidateHeader() {
             </div>
             <div className="flex items-center gap-4">
                 <ThemeToggle />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="relative">
-                            <Bell className="h-5 w-5" />
-                            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
-                            <span className="sr-only">Toggle notifications</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-80">
-                        <DropdownMenuLabel>Alerts</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <div className="max-h-[300px] overflow-auto">
-                            <DropdownMenuItem className="flex flex-col items-start gap-1 p-3 cursor-pointer">
-                                <span className="font-medium text-sm">Application Update</span>
-                                <span className="text-xs text-muted-foreground">Your application for Senior Designer at TechCorp was viewed.</span>
-                                <span className="text-[10px] text-muted-foreground mt-1">10 min ago</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="flex flex-col items-start gap-1 p-3 cursor-pointer">
-                                <span className="font-medium text-sm">New Interview Invite</span>
-                                <span className="text-xs text-muted-foreground">Stark Industries invited you to schedule a technical screen.</span>
-                                <span className="text-[10px] text-muted-foreground mt-1">2 hours ago</span>
-                            </DropdownMenuItem>
+                <div className="relative" ref={notificationRef}>
+                    <Button variant="ghost" size="icon" className="relative" onClick={() => setShowNotifications(!showNotifications)}>
+                        <Bell className="h-5 w-5" />
+                        <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
+                        <span className="sr-only">Toggle notifications</span>
+                    </Button>
+
+                    {showNotifications && (
+                        <div className="absolute right-0 top-full mt-2 w-80 rounded-md border bg-popover text-popover-foreground shadow-md z-50 animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2">
+                            <div className="flex items-center px-4 py-3 border-b bg-muted/20">
+                                <h4 className="font-semibold text-sm">Alerts</h4>
+                            </div>
+                            <div className="max-h-[300px] overflow-auto py-2">
+                                <div className="flex flex-col items-start gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setShowNotifications(false)}>
+                                    <span className="font-medium text-sm">Application Update</span>
+                                    <span className="text-xs text-muted-foreground">Your application for Senior Designer at TechCorp was viewed.</span>
+                                    <span className="text-[10px] text-muted-foreground mt-1">10 min ago</span>
+                                </div>
+                                <div className="flex flex-col items-start gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setShowNotifications(false)}>
+                                    <span className="font-medium text-sm">New Interview Invite</span>
+                                    <span className="text-xs text-muted-foreground">Stark Industries invited you to schedule a technical screen.</span>
+                                    <span className="text-[10px] text-muted-foreground mt-1">2 hours ago</span>
+                                </div>
+                            </div>
                         </div>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                    )}
+                </div>
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

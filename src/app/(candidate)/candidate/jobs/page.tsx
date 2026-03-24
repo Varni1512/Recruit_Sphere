@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { availableJobs } from "@/lib/dummyData"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/lib/localAuth"
 import { getUserProfile, calculateProfileCompletion } from "@/lib/profileUtils"
 
 export default function CandidateJobsPage() {
@@ -67,7 +67,7 @@ export default function CandidateJobsPage() {
                     return
                 }
 
-                // Fallback to Firestore check
+                // Fallback to profile storage check
                 const profile = await getUserProfile(user.uid)
                 const completion = calculateProfileCompletion(profile)
 

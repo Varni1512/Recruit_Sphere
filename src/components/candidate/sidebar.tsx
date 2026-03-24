@@ -4,8 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Briefcase, Calendar as CalendarIcon, FileText, Home, LogOut, User } from "lucide-react"
 import { deleteRoleCookie } from "@/app/actions/auth"
-import { auth } from "@/lib/firebase"
-import { signOut } from "firebase/auth"
+import { auth, signOut } from "@/lib/localAuth"
 
 import { cn } from "@/lib/utils"
 

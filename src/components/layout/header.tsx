@@ -1,6 +1,7 @@
 "use client"
 
 import { Bell, Menu, Search, User } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +15,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -26,6 +32,18 @@ import { SidebarNavItems } from "./sidebar"
 import Link from "next/link"
 
 export function Header() {
+  const [showNotifications, setShowNotifications] = useState(false)
+  const notificationRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 mt-0 sm:mt-4">
       <Sheet>
@@ -63,38 +81,40 @@ export function Header() {
         </form>
       </div>
       <ThemeToggle />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="relative">
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>
-            <span className="sr-only">View notifications</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[300px]">
-          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <div className="flex flex-col gap-1 max-h-[300px] overflow-auto py-2">
-            <div className="flex flex-col gap-1 px-4 py-2 hover:bg-muted/50 transition-colors cursor-pointer">
-              <span className="text-sm font-medium">New application received</span>
-              <span className="text-xs text-muted-foreground">Alex Carter applied for Frontend Developer.</span>
-              <span className="text-[10px] text-muted-foreground mt-1">10 minutes ago</span>
+      <div className="relative" ref={notificationRef}>
+        <Button variant="outline" size="icon" className="relative" onClick={() => setShowNotifications(!showNotifications)}>
+          <Bell className="h-4 w-4" />
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>
+          <span className="sr-only">View notifications</span>
+        </Button>
+        {showNotifications && (
+          <div className="absolute right-0 top-full mt-2 w-[300px] rounded-md border bg-popover text-popover-foreground shadow-md z-50 animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2">
+            <div className="flex items-center px-4 py-3 border-b bg-muted/20">
+              <h4 className="font-semibold text-sm">Notifications</h4>
             </div>
-            <div className="flex flex-col gap-1 px-4 py-2 hover:bg-muted/50 transition-colors cursor-pointer">
-              <span className="text-sm font-medium">Interview upcoming</span>
-              <span className="text-xs text-muted-foreground">Technical interview with Sarah Jenkins in 30 mins.</span>
-              <span className="text-[10px] text-muted-foreground mt-1">2 hours ago</span>
+            <div className="flex flex-col max-h-[300px] overflow-auto py-2">
+              <div className="flex flex-col gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setShowNotifications(false)}>
+                <span className="text-sm font-medium">New application received</span>
+                <span className="text-xs text-muted-foreground">Alex Carter applied for Frontend Developer.</span>
+                <span className="text-[10px] text-muted-foreground mt-1">10 minutes ago</span>
+              </div>
+              <div className="flex flex-col gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setShowNotifications(false)}>
+                <span className="text-sm font-medium">Interview upcoming</span>
+                <span className="text-xs text-muted-foreground">Technical interview with Sarah Jenkins in 30 mins.</span>
+                <span className="text-[10px] text-muted-foreground mt-1">2 hours ago</span>
+              </div>
+              <div className="flex flex-col gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer text-muted-foreground" onClick={() => setShowNotifications(false)}>
+                <span className="text-sm font-medium">Job closing soon</span>
+                <span className="text-xs">Product Manager position closes in 2 days.</span>
+                <span className="text-[10px] mt-1">1 day ago</span>
+              </div>
             </div>
-            <div className="flex flex-col gap-1 px-4 py-2 hover:bg-muted/50 transition-colors cursor-pointer text-muted-foreground">
-              <span className="text-sm font-medium">Job closing soon</span>
-              <span className="text-xs">Product Manager position closes in 2 days.</span>
-              <span className="text-[10px] mt-1">1 day ago</span>
+            <div className="border-t p-2">
+              <Button variant="ghost" className="w-full text-xs" size="sm" onClick={() => setShowNotifications(false)}>Mark all as read</Button>
             </div>
           </div>
-          <DropdownMenuSeparator />
-          <Button variant="ghost" className="w-full text-xs" size="sm">Mark all as read</Button>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        )}
+      </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

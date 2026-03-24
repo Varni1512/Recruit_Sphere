@@ -21,6 +21,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { getAllJobs, updateJobStatus, deleteJob } from "@/app/actions/jobActions"
 import {
     Tabs,
     TabsContent,
@@ -28,22 +31,22 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs"
 
-import { useRouter } from "next/navigation"
-
-const jobs = [
-    { id: "1", title: "Senior Frontend Engineer", department: "Engineering", location: "Remote", type: "Full-time", status: "Active", candidates: 45, createdAt: "2d ago" },
-    { id: "2", title: "Product Marketing Manager", department: "Marketing", location: "New York, NY", type: "Full-time", status: "Active", candidates: 12, createdAt: "5d ago" },
-    { id: "3", title: "UX Designer", department: "Design", location: "London, UK", type: "Full-time", status: "Active", candidates: 32, createdAt: "1w ago" },
-    { id: "4", title: "Backend Developer", department: "Engineering", location: "Remote", type: "Contract", status: "Paused", candidates: 89, createdAt: "2w ago" },
-    { id: "5", title: "Content Strategist", department: "Marketing", location: "Remote", type: "Part-time", status: "Paused", candidates: 15, createdAt: "3w ago" },
-    { id: "6", title: "Data Analyst", department: "Data", location: "San Francisco, CA", type: "Full-time", status: "Paused", candidates: 54, createdAt: "1m ago" },
-    { id: "7", title: "VP of Engineering", department: "Engineering", location: "Remote", type: "Full-time", status: "Closed", candidates: 124, createdAt: "2m ago" },
-    { id: "8", title: "Sales Executive", department: "Sales", location: "Austin, TX", type: "Full-time", status: "Closed", candidates: 8, createdAt: "3m ago" },
-    { id: "9", title: "Customer Success Rep", department: "Support", location: "Remote", type: "Contract", status: "Closed", candidates: 67, createdAt: "4m ago" },
-]
-
-function JobCard({ job }: { job: typeof jobs[0] }) {
+function JobCard({ job, onUpdate }: { job: any, onUpdate: () => void }) {
     const router = useRouter()
+    const [isProcessing, setIsProcessing] = useState(false)
+
+    const handleClose = async () => {
+        setIsProcessing(true)
+        await updateJobStatus(job.id, "Closed")
+        onUpdate()
+    }
+
+    const handleDelete = async () => {
+        if (!confirm("Are you sure you want to permanently delete this job?")) return
+        setIsProcessing(true)
+        await deleteJob(job.id)
+        onUpdate()
+    }
 
     return (
         <Card className="flex flex-col">
@@ -75,11 +78,21 @@ function JobCard({ job }: { job: typeof jobs[0] }) {
                                 Edit Job
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
+                            {job.status !== "Closed" && (
+                                <DropdownMenuItem
+                                    className="text-amber-500 cursor-pointer"
+                                    onClick={handleClose}
+                                    disabled={isProcessing}
+                                >
+                                    Close Job
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                                 className="text-destructive cursor-pointer"
-                                onClick={() => alert(`Closed job: ${job.title}`)}
+                                onClick={handleDelete}
+                                disabled={isProcessing}
                             >
-                                Close Job
+                                Delete Job
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -114,6 +127,19 @@ function JobCard({ job }: { job: typeof jobs[0] }) {
 }
 
 export default function JobsPage() {
+    const [jobs, setJobs] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+
+    const fetchJobs = async () => {
+        const res = await getAllJobs("all")
+        if (res.success) setJobs(res.jobs)
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        fetchJobs()
+    }, [])
+
     return (
         <div className="flex flex-col gap-6 w-full">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -140,26 +166,32 @@ export default function JobsPage() {
                 </TabsList>
 
                 <TabsContent value="all" className="mt-6">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {jobs.map((job) => <JobCard key={job.id} job={job} />)}
-                    </div>
+                    {loading ? <div className="text-center py-10 text-muted-foreground">Loading jobs...</div> : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:max-w-[95%]">
+                            {jobs.map((job) => <JobCard key={job.id} job={job} onUpdate={fetchJobs} />)}
+                            {jobs.length === 0 && <div className="col-span-full text-center py-10 text-muted-foreground">No jobs posted yet.</div>}
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="active" className="mt-6">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {jobs.filter(j => j.status === "Active").map((job) => <JobCard key={job.id} job={job} />)}
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:max-w-[95%]">
+                        {jobs.filter(j => j.status === "Active").map((job) => <JobCard key={job.id} job={job} onUpdate={fetchJobs} />)}
+                        {jobs.filter(j => j.status === "Active").length === 0 && !loading && <div className="col-span-full text-center py-10 text-muted-foreground">No active jobs.</div>}
                     </div>
                 </TabsContent>
 
                 <TabsContent value="paused" className="mt-6">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {jobs.filter(j => j.status === "Paused").map((job) => <JobCard key={job.id} job={job} />)}
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:max-w-[95%]">
+                        {jobs.filter(j => j.status === "Paused").map((job) => <JobCard key={job.id} job={job} onUpdate={fetchJobs} />)}
+                        {jobs.filter(j => j.status === "Paused").length === 0 && !loading && <div className="col-span-full text-center py-10 text-muted-foreground">No paused jobs.</div>}
                     </div>
                 </TabsContent>
 
                 <TabsContent value="closed" className="mt-6">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {jobs.filter(j => j.status === "Closed").map((job) => <JobCard key={job.id} job={job} />)}
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:max-w-[95%]">
+                        {jobs.filter(j => j.status === "Closed").map((job) => <JobCard key={job.id} job={job} onUpdate={fetchJobs} />)}
+                        {jobs.filter(j => j.status === "Closed").length === 0 && !loading && <div className="col-span-full text-center py-10 text-muted-foreground">No closed jobs.</div>}
                     </div>
                 </TabsContent>
             </Tabs>

@@ -2,7 +2,9 @@
 
 import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
-import { useState, use } from "react"
+import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { getJobById, updateJob } from "@/app/actions/jobActions"
 import dynamic from 'next/dynamic'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
@@ -27,9 +29,70 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 
-export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params)
-    const [description, setDescription] = useState("We are looking for an experienced Senior Product Designer to join our dynamic team. You will be responsible for leading the design of our core product features, working closely with engineering and product management to deliver exceptional user experiences.")
+export default function EditJobPage({ params }: { params: { id: string } }) {
+    const id = params.id
+    const router = useRouter()
+    
+    const [title, setTitle] = useState("")
+    const [department, setDepartment] = useState("")
+    const [type, setType] = useState("")
+    const [locationType, setLocationType] = useState("")
+    const [location, setLocation] = useState("")
+    const [experience, setExperience] = useState("")
+    const [salary, setSalary] = useState("")
+    const [description, setDescription] = useState("")
+    const [isSaving, setIsSaving] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchJob = async () => {
+            if (id) {
+                const res = await getJobById(id)
+                if (res.success && res.job) {
+                    setTitle(res.job.title)
+                    setDepartment(res.job.department)
+                    setType(res.job.type)
+                    setLocationType(res.job.locationType)
+                    setLocation(res.job.location)
+                    setExperience(res.job.experience || "")
+                    setSalary(res.job.salary || "")
+                    setDescription(res.job.description)
+                }
+                setIsLoading(false)
+            }
+        }
+        fetchJob()
+    }, [id])
+
+    const handleSave = async () => {
+        setIsSaving(true)
+        try {
+            const result = await updateJob(id, {
+                title,
+                department,
+                type,
+                locationType,
+                location,
+                experience,
+                salary,
+                description
+            })
+            if (result.success) {
+                router.push(`/jobs/${id}`)
+            } else {
+                alert("Failed to update job: " + result.error)
+            }
+        } catch (error) {
+            console.error(error)
+            alert("An error occurred")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    if (isLoading) {
+        return <div className="flex items-center justify-center p-20 text-muted-foreground">Loading job details...</div>
+    }
 
     return (
         <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto h-full overflow-y-auto pb-8 px-1">
@@ -57,12 +120,12 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                 <CardContent className="grid gap-6">
                     <div className="grid gap-2">
                         <Label htmlFor="title">Job Title</Label>
-                        <Input id="title" defaultValue="Senior Product Designer" />
+                        <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="department">Department</Label>
-                            <Select defaultValue="design">
+                            <Select value={department} onValueChange={setDepartment}>
                                 <SelectTrigger id="department">
                                     <SelectValue placeholder="Select department" />
                                 </SelectTrigger>
@@ -76,7 +139,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="type">Employment Type</Label>
-                            <Select defaultValue="full-time">
+                            <Select value={type} onValueChange={setType}>
                                 <SelectTrigger id="type">
                                     <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
@@ -92,7 +155,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="location-type">Location Type</Label>
-                            <Select defaultValue="remote">
+                            <Select value={locationType} onValueChange={setLocationType}>
                                 <SelectTrigger id="location-type">
                                     <SelectValue placeholder="Select location type" />
                                 </SelectTrigger>
@@ -105,7 +168,28 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="location">Location</Label>
-                            <Input id="location" defaultValue="Remote" />
+                            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="experience">Experience Level</Label>
+                            <Select value={experience} onValueChange={setExperience}>
+                                <SelectTrigger id="experience">
+                                    <SelectValue placeholder="Select experience" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Entry Level">Entry Level</SelectItem>
+                                    <SelectItem value="Mid-Level">Mid-Level</SelectItem>
+                                    <SelectItem value="Senior">Senior</SelectItem>
+                                    <SelectItem value="Director/Executive">Director/Executive</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="salary">Estimated Salary</Label>
+                            <Input id="salary" placeholder="e.g. $80,000 - $100,000" value={salary} onChange={(e) => setSalary(e.target.value)} />
                         </div>
                     </div>
 
@@ -126,12 +210,12 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-4 border-t px-6 py-4">
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" asChild disabled={isSaving}>
                         <Link href={`/jobs/${id}`}>Cancel</Link>
                     </Button>
-                    <Button>
+                    <Button onClick={handleSave} disabled={isSaving}>
                         <Save className="mr-2 h-4 w-4" />
-                        Save Changes
+                        {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
                 </CardFooter>
             </Card>

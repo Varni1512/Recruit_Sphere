@@ -21,17 +21,99 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { availableJobs } from "@/lib/dummyData"
 import { auth } from "@/lib/localAuth"
 import { getUserProfile, calculateProfileCompletion } from "@/lib/profileUtils"
+import { getJobById, applyToJob } from "@/app/actions/jobActions"
+import { uploadToCloudinary } from "@/app/actions/uploadActions"
+import MarkdownViewer from "@/components/MarkdownViewer"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 
-export default function CandidateJobDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params)
+export default function CandidateJobDetailsPage({ params }: { params: { id: string } }) {
+    const id = params.id
     const router = useRouter()
     const [isApplying, setIsApplying] = useState(false)
-    const [coverLetter, setCoverLetter] = useState("")
     const [checkingAccess, setCheckingAccess] = useState(true)
     const [canAccess, setCanAccess] = useState(false)
+    const [job, setJob] = useState<any>(null)
+    const [loadingJob, setLoadingJob] = useState(true)
+
+    // Form fields
+    const [firstName, setFirstName] = useState("")
+    const [middleName, setMiddleName] = useState("")
+    const [lastName, setLastName] = useState("")
+    const [mobile, setMobile] = useState("")
+    const [email, setEmail] = useState("")
+    const [githubLink, setGithubLink] = useState("")
+    const [linkedinLink, setLinkedinLink] = useState("")
+    const [codolioLink, setCodolioLink] = useState("")
+    const [website, setWebsite] = useState("")
+    const [address, setAddress] = useState("")
+    const [collegeYear, setCollegeYear] = useState("")
+    const [collegeBranch, setCollegeBranch] = useState("")
+    const [qualifications, setQualifications] = useState("")
+    const [gender, setGender] = useState("")
+    const [termsAccepted, setTermsAccepted] = useState(false)
+    const [resumeFile, setResumeFile] = useState<File | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const handleApplyJob = async () => {
+        if (!firstName || !lastName || !mobile || !email || !address || !collegeYear || !collegeBranch || !qualifications || !gender || !termsAccepted || !resumeFile) {
+            alert("Please fill in all mandatory fields, accept the terms, and upload your resume PDF.")
+            return
+        }
+        setIsSubmitting(true)
+
+        try {
+            const formData = new FormData()
+            formData.append("file", resumeFile)
+            
+            const uploadResult = await uploadToCloudinary(formData) as any
+            if (uploadResult.error) {
+                alert("Resume upload failed: " + uploadResult.error)
+                setIsSubmitting(false)
+                return
+            }
+
+            const payload = {
+                jobId: job.id,
+                candidateId: auth.currentUser?.uid || "",
+                firstName,
+                middleName,
+                lastName,
+                mobile,
+                email,
+                githubLink,
+                linkedinLink,
+                codolioLink,
+                website,
+                resumeUrl: (uploadResult as any).url,
+                address,
+                collegeYear,
+                collegeBranch,
+                qualifications,
+                gender
+            }
+
+            const res = await applyToJob(payload)
+            if (res.success) {
+                alert("Application Submitted Successfully!")
+                router.push('/candidate/applications')
+            } else {
+                alert("Database Error: " + res.error)
+            }
+        } catch (e: any) {
+            alert("Error submitting application: " + e.message)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -72,6 +154,11 @@ export default function CandidateJobDetailsPage({ params }: { params: Promise<{ 
                 if (completion >= 80) {
                     setCanAccess(true)
                     try {
+                        const names = (profile?.fullName || "").split(" ")
+                        setFirstName(names[0] || "")
+                        setLastName(names.slice(1).join(" ") || "")
+                        setEmail(user.email || "")
+
                         if (typeof window !== "undefined") {
                             localStorage.setItem(
                                 cacheKey,
@@ -96,11 +183,19 @@ export default function CandidateJobDetailsPage({ params }: { params: Promise<{ 
             }
         })
 
-        return () => unsubscribe()
-    }, [router])
+        const fetchJob = async () => {
+            if (id) {
+                const res = await getJobById(id)
+                if (res.success) setJob(res.job)
+                setLoadingJob(false)
+            }
+        }
+        fetchJob()
 
-    // Find the specific job from the shared mock data
-    const job = availableJobs.find(j => j.id === id)
+        return () => unsubscribe()
+    }, [router, id])
+
+    // Render loading states where applicable
 
     if (checkingAccess && !canAccess) {
         return (
@@ -112,6 +207,14 @@ export default function CandidateJobDetailsPage({ params }: { params: Promise<{ 
 
     if (!canAccess) {
         return null
+    }
+
+    if (loadingJob) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center text-muted-foreground">
+                Loading job details...
+            </div>
+        )
     }
 
     if (!job) {
@@ -147,52 +250,117 @@ export default function CandidateJobDetailsPage({ params }: { params: Promise<{ 
                         <CardDescription>Please provide your most up-to-date information.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="grid gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            {/* IDENTITY */}
                             <div className="grid gap-2">
-                                <Label htmlFor="resume">Resume / CV</Label>
-                                <div className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center text-center gap-3 bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer">
+                                <Label>First Name *</Label>
+                                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Middle Name</Label>
+                                <Input value={middleName} onChange={(e) => setMiddleName(e.target.value)} placeholder="A." />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Last Name *</Label>
+                                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Gender *</Label>
+                                <Select value={gender} onValueChange={setGender}>
+                                    <SelectTrigger><SelectValue placeholder="Select Gender" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Male">Male</SelectItem>
+                                        <SelectItem value="Female">Female</SelectItem>
+                                        <SelectItem value="Other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* CONTACT & LINKS */}
+                            <div className="grid gap-2">
+                                <Label>Email Address *</Label>
+                                <Input value={email} readOnly className="bg-muted/50 cursor-not-allowed text-muted-foreground" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Mobile Number *</Label>
+                                <Input value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="+1 234 567 890" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Address *</Label>
+                                <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Main St, City, Country" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>LinkedIn Profile</Label>
+                                <Input value={linkedinLink} onChange={(e) => setLinkedinLink(e.target.value)} placeholder="https://linkedin.com/in/..." />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>GitHub Profile</Label>
+                                <Input value={githubLink} onChange={(e) => setGithubLink(e.target.value)} placeholder="https://github.com/..." />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Codolio Link</Label>
+                                <Input value={codolioLink} onChange={(e) => setCodolioLink(e.target.value)} placeholder="https://codolio.com/..." />
+                            </div>
+                            <div className="grid gap-2 md:col-span-2">
+                                <Label>Personal Website (Optional)</Label>
+                                <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://yourwebsite.com" />
+                            </div>
+
+                            {/* EDUCATION */}
+                            <div className="grid gap-2 md:col-span-2">
+                                <Label>College Qualifications / Degree *</Label>
+                                <Input value={qualifications} onChange={(e) => setQualifications(e.target.value)} placeholder="B.Tech in Computer Science" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>College Branch *</Label>
+                                <Input value={collegeBranch} onChange={(e) => setCollegeBranch(e.target.value)} placeholder="Computer Science and Engineering" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>College Graduation Year *</Label>
+                                <Input value={collegeYear} onChange={(e) => setCollegeYear(e.target.value)} placeholder="2025" />
+                            </div>
+
+                            {/* RESUME UPLOAD */}
+                            <div className="grid gap-2 md:col-span-2">
+                                <Label>Resume (PDF) *</Label>
+                                <div className="relative border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center gap-2 bg-muted/20 hover:bg-muted/40 transition-colors">
+                                    <Input 
+                                        type="file" 
+                                        accept=".pdf" 
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                                        onChange={(e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                                setResumeFile(e.target.files[0])
+                                            }
+                                        }}
+                                    />
                                     <div className="p-3 bg-primary/10 text-primary rounded-full">
                                         <Upload className="h-6 w-6" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium">Click to upload resume</p>
-                                        <p className="text-xs text-muted-foreground mt-1">PDF, DOCX up to 5MB</p>
+                                        <p className="text-sm font-medium">Click or drag PDF to upload resume</p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            {resumeFile ? <span className="text-primary font-bold">{resumeFile.name}</span> : "PDF up to 5MB"}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
+                            
+                        </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="coverLetter">Cover Letter</Label>
-                                <div className="border rounded-md overflow-hidden bg-background">
-                                    <MDEditor
-                                        value={coverLetter}
-                                        onChange={(val) => setCoverLetter(val || '')}
-                                        height={250}
-                                        preview="edit"
-                                        hideToolbar={false}
-                                        className="w-full"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="portfolio">Portfolio / Work Links</Label>
-                                <Input id="portfolio" placeholder="https://" />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="salary">Expected Salary (Optional)</Label>
-                                <Input id="salary" placeholder="e.g. $120,000" />
-                            </div>
+                        {/* TERMS */}
+                        <div className="flex items-center space-x-2 border rounded-lg p-4 bg-muted/10 mt-4">
+                            <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(val) => setTermsAccepted(val as boolean)} />
+                            <Label htmlFor="terms" className="text-sm font-normal cursor-pointer">
+                                I verify that all the information provided is accurate and I agree to the <Link href="#" className="underline">Terms and Conditions</Link>.
+                            </Label>
                         </div>
 
                         <div className="mt-8 pt-6 border-t flex items-center justify-end gap-3 sticky bottom-0 bg-card z-10 py-4 -mx-6 px-6">
-                            <Button variant="outline" onClick={() => setIsApplying(false)}>Back to Details</Button>
-                            <Button onClick={() => {
-                                alert("Application Submitted successfully!")
-                                router.push('/candidate/applications')
-                            }}>
-                                Submit Application
+                            <Button type="button" variant="outline" onClick={() => setIsApplying(false)} disabled={isSubmitting}>Back to Details</Button>
+                            <Button onClick={handleApplyJob} disabled={isSubmitting || !termsAccepted}>
+                                {isSubmitting ? "Submitting Application..." : "Submit Application"}
                             </Button>
                         </div>
                     </CardContent>
@@ -228,10 +396,10 @@ export default function CandidateJobDetailsPage({ params }: { params: Promise<{ 
                         <CardHeader>
                             <CardTitle>Job Description</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <p className="text-sm text-foreground leading-relaxed">
-                                {job.description}
-                            </p>
+                        <CardContent>
+                            <div className="text-muted-foreground">
+                                <MarkdownViewer source={job.description} />
+                            </div>
                             <p className="text-sm text-muted-foreground leading-relaxed">
                                 Curabitur non nulla sit amet nisl tempus convallis quis ac lectus. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Nulla quis lorem ut libero malesuada feugiat. Donec sollicitudin molestie malesuada.
                             </p>
@@ -314,7 +482,7 @@ export default function CandidateJobDetailsPage({ params }: { params: Promise<{ 
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-wrap gap-2">
-                                {job.tags.map(tag => (
+                                {job.tags.map((tag: string) => (
                                     <Badge key={tag} variant="secondary" className="font-normal text-xs px-2 py-1">
                                         {tag}
                                     </Badge>

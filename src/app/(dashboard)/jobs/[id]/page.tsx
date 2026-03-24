@@ -10,30 +10,24 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { getJobById } from "@/app/actions/jobActions"
+import MarkdownViewer from "@/components/MarkdownViewer"
 
-export default async function JobDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
+export default async function JobDetailsPage({ params }: { params: { id: string } }) {
+    const id = params.id
 
-    // Mock data for the specific job
-    const job = {
-        id: id,
-        title: "Senior Product Designer",
-        department: "Design",
-        location: "Remote",
-        type: "Full-time",
-        status: "Active",
-        candidates: 24,
-        createdAt: "3 days ago",
-        description: `We are looking for an experienced Senior Product Designer to join our dynamic team. You will be responsible for leading the design of our core product features, working closely with engineering and product management to deliver exceptional user experiences.
+    const res = await getJobById(id)
+    const job = res.success ? res.job : null
 
-The ideal candidate has a strong portfolio demonstrating end-to-end design thinking, from user research and wireframing to high-fidelity prototyping and visual design.`,
-        requirements: [
-            "5+ years of experience in product design",
-            "Strong portfolio demonstrating complex workflows",
-            "Proficiency in Figma and modern design tools",
-            "Experience working in Agile/Scrum environments",
-            "Excellent communication and collaboration skills"
-        ]
+    if (!job) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20">
+                <h1 className="text-2xl font-bold">Job Not Found</h1>
+                <Button className="mt-4" asChild>
+                    <Link href="/jobs">Back to Active Jobs</Link>
+                </Button>
+            </div>
+        )
     }
 
     return (
@@ -74,24 +68,12 @@ The ideal candidate has a strong portfolio demonstrating end-to-end design think
                             <CardTitle>Job Description</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="whitespace-pre-wrap text-muted-foreground">
-                                {job.description}
+                            <div className="text-muted-foreground">
+                                <MarkdownViewer source={job.description} />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Requirements</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-                                {job.requirements.map((req, i) => (
-                                    <li key={i}>{req}</li>
-                                ))}
-                            </ul>
-                        </CardContent>
-                    </Card>
                 </div>
 
                 <div className="flex flex-col gap-6">

@@ -24,14 +24,15 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { availableJobs } from "@/lib/dummyData"
 import { auth } from "@/lib/localAuth"
 import { getUserProfile, calculateProfileCompletion } from "@/lib/profileUtils"
+import { getAllJobs } from "@/app/actions/jobActions"
 
 export default function CandidateJobsPage() {
     const router = useRouter()
     const [checkingAccess, setCheckingAccess] = useState(true)
     const [canAccess, setCanAccess] = useState(false)
+    const [availableJobs, setAvailableJobs] = useState<any[]>([])
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -97,6 +98,12 @@ export default function CandidateJobsPage() {
                 setCheckingAccess(false)
             }
         })
+
+        const fetchJobs = async () => {
+            const res = await getAllJobs("Active")
+            if (res.success) setAvailableJobs(res.jobs)
+        }
+        fetchJobs()
 
         return () => unsubscribe()
     }, [router])
@@ -200,14 +207,18 @@ export default function CandidateJobsPage() {
                     </div>
 
                     <div className="pb-6">
-                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                            {availableJobs.map((job) => (
+                        <div className="grid gap-4 sm:grid-cols-1 xl:grid-cols-2 md:max-w-[95%] lg:max-w-[90%] xl:max-w-full">
+                            {availableJobs.length === 0 ? (
+                                <div className="col-span-1 sm:col-span-2 xl:col-span-3 text-center py-10 text-muted-foreground">
+                                    No active jobs available right now. Check back later!
+                                </div>
+                            ) : availableJobs.map((job) => (
                                 <Card key={job.id} className="flex flex-col hover:border-primary/50 transition-colors">
                                     <CardHeader className="pb-3">
                                         <div className="flex justify-between items-start gap-4">
                                             <div className="flex-1 min-w-0">
-                                                <CardTitle className="text-lg line-clamp-1" title={job.title}>{job.title}</CardTitle>
-                                                <CardDescription className="text-primary font-medium mt-1 truncate">
+                                                <CardTitle className="text-lg leading-tight" title={job.title}>{job.title}</CardTitle>
+                                                <CardDescription className="text-primary font-medium mt-2">
                                                     {job.company}
                                                 </CardDescription>
                                             </div>
@@ -228,7 +239,7 @@ export default function CandidateJobsPage() {
                                             </div>
                                         </div>
                                         <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
-                                            {job.tags.map(tag => (
+                                            {job.tags.map((tag: string) => (
                                                 <Badge key={tag} variant="outline" className="text-[10px] sm:text-xs font-normal">
                                                     {tag}
                                                 </Badge>

@@ -15,10 +15,14 @@ export async function uploadToCloudinary(formData: FormData) {
 
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
+        const ext = file.name.split('.').pop() || ""
 
         return new Promise<{ url: string, name: string }>((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
-                { resource_type: "auto" }, // supports image, video, raw (pdfs/docs)
+                {
+                    resource_type: "auto",
+                    public_id: `upload_${Date.now()}${ext ? '.' + ext : ''}`
+                },
                 (error, result) => {
                     if (error) {
                         console.error("Cloudinary upload error:", error)

@@ -555,7 +555,13 @@ export default function CandidateProfilePage() {
                                                     </Button>
                                                 </DialogHeader>
                                                 <div className="flex-1 overflow-hidden" style={{ minHeight: "50vh" }}>
-                                                    <iframe src={resumeUrl} className="w-full h-full border-0" title="Resume Preview" />
+                                                    {resumeUrl.startsWith("blob:") ? (
+                                                        <iframe src={resumeUrl} className="w-full h-full border-0" title="Resume Preview" />
+                                                    ) : resumeName?.toLowerCase().endsWith(".pdf") || resumeUrl?.toLowerCase().includes(".pdf") ? (
+                                                        <iframe src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(resumeUrl)}`} className="w-full h-full border-0" title="Resume Preview" />
+                                                    ) : (
+                                                        <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(resumeUrl)}&embedded=true`} className="w-full h-full border-0" title="Resume Preview" />
+                                                    )}
                                                 </div>
                                             </DialogContent>
                                         </Dialog>

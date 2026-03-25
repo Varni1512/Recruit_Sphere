@@ -143,7 +143,7 @@ export function Header() {
         <DropdownMenuTrigger asChild>
           <Button variant="secondary" size="icon" className="rounded-full ring-2 ring-transparent transition-all hover:ring-primary/20">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="https://github.com/shadcn.png" alt="@admin" />
+              <AvatarImage src="/photo.jpg" alt="@admin" />
               <AvatarFallback>AD</AvatarFallback>
             </Avatar>
             <span className="sr-only">View profile</span>
@@ -159,9 +159,9 @@ export function Header() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
+          {/* <DropdownMenuItem asChild>
             <Link href="/profile" className="cursor-pointer">Profile</Link>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
           <DropdownMenuSeparator />
         </DropdownMenuContent>
       </DropdownMenu>

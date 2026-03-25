@@ -77,6 +77,18 @@ export default function LoginPage() {
             try { await setRoleCookie("recruiter"); } catch (e) { }
             if (typeof window !== "undefined") {
                 document.cookie = `role=recruiter; path=/; max-age=604800`;
+                
+                // Inject fake localAuth session for Recruiter!
+                const uid = "recruiter_mock_123"
+                localStorage.setItem("rs_auth_session_uid_v1", uid)
+                const existingUsersRaw = localStorage.getItem("rs_auth_users_v1")
+                let existingUsers = []
+                try { if (existingUsersRaw) existingUsers = JSON.parse(existingUsersRaw) } catch (e) { }
+                if (!existingUsers.find((u: any) => u.uid === uid)) {
+                    existingUsers.push({ uid, email, displayName: "Demo Recruiter", photoURL: "", provider: "password" })
+                    localStorage.setItem("rs_auth_users_v1", JSON.stringify(existingUsers))
+                }
+
                 window.location.href = "/";
             }
             return

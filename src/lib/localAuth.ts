@@ -206,6 +206,25 @@ export async function updateProfile(
     setSessionUser({ ...user });
 }
 
+export async function updateEmail(user: LocalUser, newEmail: string) {
+    const normalizedEmail = newEmail.trim().toLowerCase();
+    const users = readUsers();
+    
+    // Check if new email is taken by another user
+    const existing = users.find((u) => u.email.toLowerCase() === normalizedEmail && u.uid !== user.uid);
+    if (existing) {
+        throw new Error("Email already in use");
+    }
+
+    const idx = users.findIndex((u) => u.uid === user.uid);
+    if (idx !== -1) {
+        users[idx].email = normalizedEmail;
+        user.email = normalizedEmail;
+        writeUsers(users);
+        setSessionUser({ ...user });
+    }
+}
+
 export async function signOut(_auth: typeof auth) {
     setSessionUser(null);
 }

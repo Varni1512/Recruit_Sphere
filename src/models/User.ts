@@ -9,6 +9,8 @@ export interface IUser extends Document {
     createdAt: Date;
     phone?: string;
     location?: string;
+    jobTitle?: string;
+    companyName?: string;
     summary?: string;
     skills?: string[];
     portfolio?: string;
@@ -45,6 +47,8 @@ const UserSchema: Schema = new Schema({
     },
     phone: String,
     location: String,
+    jobTitle: String,
+    companyName: String,
     summary: String,
     skills: [String],
     portfolio: String,

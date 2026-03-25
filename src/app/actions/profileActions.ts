@@ -108,3 +108,78 @@ export async function getProfileFromDb(uid: string) {
         return { success: false, error: error.message }
     }
 }
+
+export interface RecruiterProfile {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    location: string;
+    companyName: string;
+    jobTitle: string;
+    photoUrl: string;
+    summary: string;
+}
+
+export async function updateRecruiterProfileInDb(email: string, profileData: Partial<RecruiterProfile>) {
+    try {
+        if (!email || typeof email !== "string") {
+            throw new Error("Invalid Email")
+        }
+
+        await connectToDatabase()
+
+        let user = await User.findOne({ email })
+
+        if (!user) {
+            // Upsert fallback for dynamically localAuth created users
+            user = new User({ email, role: "recruiter" })
+        }
+
+        if (profileData.firstName !== undefined) user.firstName = profileData.firstName
+        if (profileData.lastName !== undefined) user.lastName = profileData.lastName
+        if (profileData.phone !== undefined) user.phone = profileData.phone
+        if (profileData.email !== undefined) user.email = profileData.email
+        if (profileData.location !== undefined) user.location = profileData.location
+        if (profileData.companyName !== undefined) user.companyName = profileData.companyName
+        if (profileData.jobTitle !== undefined) user.jobTitle = profileData.jobTitle
+        if (profileData.summary !== undefined) user.summary = profileData.summary
+        if (profileData.photoUrl !== undefined) user.photoUrl = profileData.photoUrl
+
+        await user.save()
+        return { success: true }
+    } catch (error: any) {
+        console.error("Failed to update recruiter profile in DB:", error)
+        return { success: false, error: error.message }
+    }
+}
+
+export async function getRecruiterProfileFromDb(email: string) {
+    try {
+        if (!email || typeof email !== "string") {
+            return { success: false, error: "Invalid email identity format" }
+        }
+
+        await connectToDatabase()
+        const user = await User.findOne({ email }).lean()
+
+        if (!user) return { success: false, error: "User not found" }
+
+        const profile: Partial<RecruiterProfile> = {
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            email: user.email,
+            phone: user.phone || "",
+            location: user.location || "",
+            companyName: user.companyName || "",
+            jobTitle: user.jobTitle || "",
+            summary: user.summary || "",
+            photoUrl: user.photoUrl || "",
+        }
+
+        return { success: true, profile }
+    } catch (error: any) {
+        console.error("Failed to fetch recruiter profile from DB:", error)
+        return { success: false, error: error.message }
+    }
+}

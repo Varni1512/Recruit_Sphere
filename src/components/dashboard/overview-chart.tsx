@@ -2,25 +2,10 @@
 
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
-const data = [
-    { name: "Jan", total: 104 },
-    { name: "Feb", total: 120 },
-    { name: "Mar", total: 154 },
-    { name: "Apr", total: 180 },
-    { name: "May", total: 150 },
-    { name: "Jun", total: 210 },
-    { name: "Jul", total: 240 },
-    { name: "Aug", total: 190 },
-    { name: "Sep", total: 220 },
-    { name: "Oct", total: 270 },
-    { name: "Nov", total: 310 },
-    { name: "Dec", total: 340 },
-]
-
-export function OverviewChart() {
+export function OverviewChart({ data }: { data: any[] }) {
     return (
-        <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={data}>
+        <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <XAxis
                     dataKey="name"
                     stroke="#888888"

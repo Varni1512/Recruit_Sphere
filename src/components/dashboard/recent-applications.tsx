@@ -9,55 +9,11 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
-const recentApplications = [
-    {
-        id: "1",
-        name: "Olivia Martin",
-        email: "olivia.martin@email.com",
-        role: "Frontend Developer",
-        status: "Interview",
-        date: "Today",
-        avatar: "OM",
-    },
-    {
-        id: "2",
-        name: "Jackson Lee",
-        email: "jackson.lee@email.com",
-        role: "Senior UX Designer",
-        status: "Screening",
-        date: "Yesterday",
-        avatar: "JL",
-    },
-    {
-        id: "3",
-        name: "Isabella Nguyen",
-        email: "isabella.nguyen@email.com",
-        role: "Product Manager",
-        status: "Offer",
-        date: "2 days ago",
-        avatar: "IN",
-    },
-    {
-        id: "4",
-        name: "William Kim",
-        email: "will@email.com",
-        role: "Backend Engineer",
-        status: "Shortlisted",
-        date: "3 days ago",
-        avatar: "WK",
-    },
-    {
-        id: "5",
-        name: "Sofia Davis",
-        email: "sofia.davis@email.com",
-        role: "Marketing Manager",
-        status: "Applied",
-        date: "3 days ago",
-        avatar: "SD",
-    },
-]
+export function RecentApplications({ applications }: { applications?: any[] }) {
+    if (!applications || applications.length === 0) {
+        return <div className="text-center p-4 text-muted-foreground">No recent applications found.</div>
+    }
 
-export function RecentApplications() {
     return (
         <Table>
             <TableHeader>
@@ -69,7 +25,7 @@ export function RecentApplications() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {recentApplications.map((app) => (
+                {applications.map((app) => (
                     <TableRow key={app.id}>
                         <TableCell>
                             <div className="flex items-center gap-3">

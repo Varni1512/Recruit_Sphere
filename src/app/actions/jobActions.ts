@@ -3,6 +3,8 @@
 import connectToDatabase from "@/lib/mongodb"
 import Job from "@/models/Job"
 import Application from "@/models/Application"
+import Notification from "@/models/Notification"
+import User from "@/models/User"
 import { revalidatePath } from "next/cache"
 import { formatDistanceToNow } from "date-fns"
 
@@ -30,6 +32,30 @@ export async function createJob(data: any) {
         })
 
         await newJob.save()
+
+        // Notify all candidates about the new job
+        const candidates = await User.find({ role: 'candidate' }, { email: 1 }).lean();
+        const notifications = candidates.map(c => ({
+            recipientEmail: c.email,
+            type: 'JOB_POSTED',
+            message: `A new job '${newJob.title}' has been posted by ${newJob.company}.`,
+            relatedJobId: newJob._id.toString()
+        }));
+        if (notifications.length > 0) {
+            await Notification.insertMany(notifications);
+        }
+
+        // Notify all recruiters about the new job post
+        const recruiters = await User.find({ role: 'recruiter' }, { email: 1 }).lean();
+        const recruiterNotifs = recruiters.map(r => ({
+            recipientEmail: r.email,
+            type: 'JOB_POSTED',
+            message: `Job '${newJob.title}' was successfully posted.`,
+            relatedJobId: newJob._id.toString()
+        }));
+        if (recruiterNotifs.length > 0) {
+            await Notification.insertMany(recruiterNotifs);
+        }
 
         // Tell Next.js to immediately purge the cache for the jobs pages so queries refresh in realtime
         revalidatePath('/jobs')
@@ -184,6 +210,29 @@ export async function applyToJob(data: any) {
         // Increment candidate tracker
         await Job.findByIdAndUpdate(data.jobId, { $inc: { candidatesCount: 1 } })
 
+        // Notify the candidate
+        await Notification.create({
+            recipientEmail: data.email,
+            type: 'APPLICATION_RECEIVED',
+            message: `You have successfully applied for the job.`,
+            relatedJobId: data.jobId,
+            relatedApplicationId: newApp._id.toString()
+        });
+
+        // Notify all recruiters
+        const recruiters = await User.find({ role: 'recruiter' }, { email: 1 }).lean();
+        const jobName = await Job.findById(data.jobId, { title: 1 }).lean();
+        const recruiterNotifs = recruiters.map(r => ({
+            recipientEmail: r.email,
+            type: 'APPLICATION_RECEIVED',
+            message: `${newApp.firstName} ${newApp.lastName} applied for '${jobName?.title || 'a job'}'.`,
+            relatedJobId: data.jobId,
+            relatedApplicationId: newApp._id.toString()
+        }));
+        if (recruiterNotifs.length > 0) {
+            await Notification.insertMany(recruiterNotifs);
+        }
+
         revalidatePath('/jobs')
         revalidatePath('/candidate/jobs')
         revalidatePath(`/candidate/jobs/${data.jobId}`)
@@ -272,5 +321,27 @@ export async function getCandidateApplications(candidateId: string) {
     } catch (error: any) {
         console.error("Failed to fetch candidate applications:", error)
         return { success: false, error: error.message, applications: [] }
+    }
+}
+
+export async function updateApplicationStatus(id: string, status: string) {
+    try {
+        await connectToDatabase()
+        const app = await Application.findByIdAndUpdate(id, { status })
+        if (app) {
+            const job = await Job.findById(app.jobId).lean()
+            await Notification.create({
+                recipientEmail: app.email,
+                type: 'STATUS_UPDATE',
+                message: `Your application for '${job?.title || 'the job'}' has been updated to: ${status}.`,
+                relatedJobId: app.jobId.toString(),
+                relatedApplicationId: app._id.toString(),
+            });
+        }
+        revalidatePath('/candidates')
+        revalidatePath('/candidate/jobs')
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
     }
 }

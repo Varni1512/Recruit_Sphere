@@ -1,5 +1,9 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { ArrowUpRight, Briefcase, FileText, CheckCircle2, Calendar } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -11,60 +15,70 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-const upcomingInterviews = [
-    {
-        id: "1",
-        company: "Stark Industries",
-        role: "Frontend Engineer",
-        date: "Tomorrow, 10:00 AM",
-        type: "Technical",
-    },
-    {
-        id: "2",
-        company: "Wayne Enterprises",
-        role: "React Developer",
-        date: "Thursday, 2:30 PM",
-        type: "Culture Fit",
-    }
-]
-
-const recentApplications = [
-    {
-        id: "1",
-        company: "Acme Corp",
-        role: "Senior UX Designer",
-        applied: "2 days ago",
-        status: "Screening",
-    },
-    {
-        id: "2",
-        company: "Globex",
-        role: "Product Manager",
-        applied: "1 week ago",
-        status: "Applied",
-    },
-    {
-        id: "3",
-        company: "Initech",
-        role: "Full Stack Engineer",
-        applied: "2 weeks ago",
-        status: "Interviewing",
-    },
-    {
-        id: "4",
-        company: "Umbrella Corp",
-        role: "Security Researcher",
-        applied: "3 weeks ago",
-        status: "Rejected",
-    }
-]
+import { auth } from "@/lib/localAuth"
+import { getUserProfile, calculateProfileCompletion } from "@/lib/profileUtils"
+import { getCandidateApplications } from "@/app/actions/jobActions"
 
 export default function CandidateDashboard() {
+    const router = useRouter()
+    const [loading, setLoading] = useState(true)
+    const [userFirstName, setUserFirstName] = useState("Candidate")
+    const [completionPercentage, setCompletionPercentage] = useState(0)
+    const [applications, setApplications] = useState<any[]>([])
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                router.push("/login")
+                return
+            }
+
+            try {
+                // Fetch profile
+                const cacheKey = `candidateProfile_${user.uid}`
+                const cachedRaw = localStorage.getItem(cacheKey)
+                if (cachedRaw) {
+                    const cached = JSON.parse(cachedRaw) as { profile?: any; completion?: number }
+                    if (cached.profile) {
+                        setUserFirstName(cached.profile.fullName?.split(" ")[0] || "Candidate")
+                    }
+                    if (typeof cached.completion === "number") {
+                        setCompletionPercentage(cached.completion)
+                    }
+                }
+
+                const profile = await getUserProfile(user.uid)
+                if (profile) {
+                    setUserFirstName(profile.fullName?.split(" ")[0] || "Candidate")
+                    setCompletionPercentage(calculateProfileCompletion(profile))
+                }
+
+                // Fetch applications
+                const res = await getCandidateApplications(user.uid)
+                if (res.success) {
+                    setApplications(res.applications)
+                }
+            } catch (error) {
+                console.error("Dashboard fetch error:", error)
+            } finally {
+                setLoading(false)
+            }
+        })
+        return () => unsubscribe()
+    }, [router])
+
+    if (loading) {
+        return <div className="flex h-[50vh] flex-col items-center justify-center text-muted-foreground animate-pulse">Loading dashboard...</div>
+    }
+
+    const offersReceived = applications.filter(a => a.status === "Offer").length
+    const recentApplications = applications.slice(0, 4)
+
     return (
         <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-2">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">👋 Welcome back, Alex!</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">👋 Welcome back, {userFirstName}!</h1>
                     <p className="text-muted-foreground mt-1">
                         Here's what's happening with your job search today.
                     </p>
@@ -83,9 +97,9 @@ export default function CandidateDashboard() {
                         <FileText className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">12</div>
+                        <div className="text-2xl font-bold">{applications.length}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            +2 from last week
+                            Lifetime applications
                         </p>
                     </CardContent>
                 </Card>
@@ -95,9 +109,9 @@ export default function CandidateDashboard() {
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">2</div>
+                        <div className="text-2xl font-bold">0</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            Next one tomorrow
+                            No scheduled interviews
                         </p>
                     </CardContent>
                 </Card>
@@ -107,9 +121,9 @@ export default function CandidateDashboard() {
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">1</div>
+                        <div className="text-2xl font-bold">{offersReceived}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            You have 1 pending offer
+                            {offersReceived === 0 ? "Keep applying!" : `You have ${offersReceived} pending offer${offersReceived > 1 ? 's' : ''}`}
                         </p>
                     </CardContent>
                 </Card>
@@ -119,10 +133,10 @@ export default function CandidateDashboard() {
                         <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">85%</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Add a portfolio to reach 100%
-                        </p>
+                        <div className="text-2xl font-bold">{completionPercentage}%</div>
+                        <div className="mt-2 h-1.5 w-full bg-secondary overflow-hidden rounded-full">
+                            <div className="h-full bg-primary" style={{ width: `${completionPercentage}%` }} />
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -145,12 +159,12 @@ export default function CandidateDashboard() {
                                     <div className="flex flex-col gap-1">
                                         <p className="text-sm font-medium leading-none">{app.role}</p>
                                         <p className="text-sm text-muted-foreground">
-                                            {app.company} • Applied {app.applied}
+                                            {app.company} • Applied {app.appliedDate}
                                         </p>
                                     </div>
                                     <Badge
                                         variant={
-                                            app.status === 'Interviewing' ? 'default' :
+                                            app.status === 'Interviewing' || app.status === 'Interview' ? 'default' :
                                                 app.status === 'Rejected' ? 'destructive' :
                                                     app.status === 'Screening' ? 'secondary' : 'outline'
                                         }
@@ -159,6 +173,9 @@ export default function CandidateDashboard() {
                                     </Badge>
                                 </div>
                             ))}
+                            {recentApplications.length === 0 && (
+                                <p className="text-muted-foreground text-sm text-center py-4">You haven't applied to any jobs yet.</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -169,31 +186,10 @@ export default function CandidateDashboard() {
                         <CardDescription>Don't be late for these scheduled calls.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {upcomingInterviews.map((interview) => (
-                                <div key={interview.id} className="flex items-start gap-4 p-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors">
-                                    <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
-                                        <Calendar className="h-4 w-4" />
-                                    </div>
-                                    <div className="flex flex-col gap-2 w-full">
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <p className="font-semibold text-sm">{interview.company}</p>
-                                                <p className="text-xs text-muted-foreground">{interview.role}</p>
-                                            </div>
-                                            <Badge variant="outline" className="text-[10px] h-5">{interview.type}</Badge>
-                                        </div>
-                                        <div className="flex items-center justify-between mt-1">
-                                            <span className="text-xs font-medium text-foreground">{interview.date}</span>
-                                            <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild>
-                                                <Link href="/candidate/interviews">
-                                                    Details <ArrowUpRight className="ml-1 h-3 w-3" />
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/20 border border-dashed rounded-xl">
+                            <Calendar className="h-8 w-8 text-muted-foreground mb-3" />
+                            <p className="font-semibold text-sm">No interviews scheduled</p>
+                            <p className="text-xs text-muted-foreground mt-1 max-w-[200px]">When a recruiter schedules an interview with you, it will appear here.</p>
                         </div>
                     </CardContent>
                 </Card>

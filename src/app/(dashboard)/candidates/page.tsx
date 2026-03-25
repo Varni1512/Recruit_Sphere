@@ -42,7 +42,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 
-import { getAllApplications } from "@/app/actions/jobActions"
+import { getAllApplications, updateApplicationStatus } from "@/app/actions/jobActions"
 
 export default async function CandidatesPage() {
     const res = await getAllApplications()
@@ -263,10 +263,23 @@ export default async function CandidatesPage() {
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                             <DropdownMenuItem>Send Email</DropdownMenuItem>
-                                            <DropdownMenuItem>Move to Next Stage</DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <form action={async () => {
+                                                    "use server";
+                                                    const nextStatus = candidate.status === "Applied" ? "Shortlisted" : candidate.status === "Shortlisted" ? "Interview" : candidate.status === "Interview" ? "Offer" : candidate.status;
+                                                    await updateApplicationStatus(candidate.id, nextStatus);
+                                                }}>
+                                                    <button type="submit" className="w-full text-left cursor-default">Move to Next Stage</button>
+                                                </form>
+                                            </DropdownMenuItem>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-destructive">
-                                                Reject Candidate
+                                            <DropdownMenuItem asChild className="text-destructive">
+                                                <form action={async () => {
+                                                    "use server";
+                                                    await updateApplicationStatus(candidate.id, "Rejected");
+                                                }}>
+                                                    <button type="submit" className="w-full text-left cursor-default">Reject Candidate</button>
+                                                </form>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>

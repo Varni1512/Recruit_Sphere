@@ -2,6 +2,8 @@
 
 import { Bell, Menu, Search, User } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
+import { auth, type LocalUser } from "@/lib/localAuth"
+import { getNotifications, markAllAsRead, markAsRead } from "@/app/actions/notificationActions"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,7 +35,33 @@ import Link from "next/link"
 
 export function Header() {
   const [showNotifications, setShowNotifications] = useState(false)
+  const [user, setUser] = useState<LocalUser | null>(null)
+  const [notifications, setNotifications] = useState<any[]>([])
   const notificationRef = useRef<HTMLDivElement>(null)
+
+  const unreadCount = notifications.filter(n => !n.read).length
+
+  useEffect(() => {
+      const unsubscribe = auth.onAuthStateChanged((u) => {
+          setUser(u)
+      })
+      return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+      // Fallback email since layout header hardcodes "recruiter@example.com"
+      const userEmail = user?.email || "recruiter@example.com"
+      getNotifications(userEmail).then(res => {
+          if (res.success) setNotifications(res.notifications)
+      })
+  }, [user?.email])
+
+  const handleMarkAllAsRead = async () => {
+      const userEmail = user?.email || "recruiter@example.com"
+      await markAllAsRead(userEmail)
+      setNotifications(notifications.map(n => ({...n, read: true})))
+      setShowNotifications(false)
+  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -84,7 +112,7 @@ export function Header() {
       <div className="relative" ref={notificationRef}>
         <Button variant="outline" size="icon" className="relative" onClick={() => setShowNotifications(!showNotifications)}>
           <Bell className="h-4 w-4" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>
+          {unreadCount > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>}
           <span className="sr-only">View notifications</span>
         </Button>
         {showNotifications && (
@@ -93,24 +121,19 @@ export function Header() {
               <h4 className="font-semibold text-sm">Notifications</h4>
             </div>
             <div className="flex flex-col max-h-[300px] overflow-auto py-2">
-              <div className="flex flex-col gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setShowNotifications(false)}>
-                <span className="text-sm font-medium">New application received</span>
-                <span className="text-xs text-muted-foreground">Alex Carter applied for Frontend Developer.</span>
-                <span className="text-[10px] text-muted-foreground mt-1">10 minutes ago</span>
-              </div>
-              <div className="flex flex-col gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setShowNotifications(false)}>
-                <span className="text-sm font-medium">Interview upcoming</span>
-                <span className="text-xs text-muted-foreground">Technical interview with Sarah Jenkins in 30 mins.</span>
-                <span className="text-[10px] text-muted-foreground mt-1">2 hours ago</span>
-              </div>
-              <div className="flex flex-col gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer text-muted-foreground" onClick={() => setShowNotifications(false)}>
-                <span className="text-sm font-medium">Job closing soon</span>
-                <span className="text-xs">Product Manager position closes in 2 days.</span>
-                <span className="text-[10px] mt-1">1 day ago</span>
-              </div>
+                {notifications.length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-muted-foreground text-center">No notifications</div>
+                ) : (
+                    notifications.map((notif: any) => (
+                        <div key={notif.id} className={`flex flex-col items-start gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer ${notif.read ? 'opacity-70' : ''}`} onClick={async () => { await markAsRead(notif.id); setNotifications(notifications.map(n => n.id === notif.id ? {...n, read: true} : n)); setShowNotifications(false) }}>
+                            <span className="font-medium text-sm capitalize">{notif.type.replace('_', ' ').toLowerCase()}</span>
+                            <span className="text-xs text-muted-foreground">{notif.message}</span>
+                        </div>
+                    ))
+                )}
             </div>
             <div className="border-t p-2">
-              <Button variant="ghost" className="w-full text-xs" size="sm" onClick={() => setShowNotifications(false)}>Mark all as read</Button>
+              <Button variant="ghost" className="w-full text-xs" size="sm" onClick={handleMarkAllAsRead}>Mark all as read</Button>
             </div>
           </div>
         )}

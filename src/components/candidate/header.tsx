@@ -4,6 +4,7 @@ import { Bell, Menu, Search, User } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import { auth, type LocalUser } from "@/lib/localAuth"
+import { getNotifications, markAllAsRead, markAsRead } from "@/app/actions/notificationActions"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -29,7 +30,26 @@ export function CandidateHeader() {
     const [open, setOpen] = useState(false)
     const [user, setUser] = useState<LocalUser | null>(null)
     const [showNotifications, setShowNotifications] = useState(false)
+    const [notifications, setNotifications] = useState<any[]>([])
     const notificationRef = useRef<HTMLDivElement>(null)
+
+    const unreadCount = notifications.filter(n => !n.read).length
+
+    useEffect(() => {
+        if (user?.email) {
+            getNotifications(user.email).then(res => {
+                if (res.success) setNotifications(res.notifications)
+            })
+        }
+    }, [user?.email])
+
+    const handleMarkAllAsRead = async () => {
+        if (user?.email) {
+            await markAllAsRead(user.email)
+            setNotifications(notifications.map(n => ({...n, read: true})))
+            setShowNotifications(false)
+        }
+    }
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -88,7 +108,7 @@ export function CandidateHeader() {
                 <div className="relative" ref={notificationRef}>
                     <Button variant="ghost" size="icon" className="relative" onClick={() => setShowNotifications(!showNotifications)}>
                         <Bell className="h-5 w-5" />
-                        <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
+                        {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />}
                         <span className="sr-only">Toggle notifications</span>
                     </Button>
 
@@ -97,18 +117,21 @@ export function CandidateHeader() {
                             <div className="flex items-center px-4 py-3 border-b bg-muted/20">
                                 <h4 className="font-semibold text-sm">Alerts</h4>
                             </div>
-                            <div className="max-h-[300px] overflow-auto py-2">
-                                <div className="flex flex-col items-start gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setShowNotifications(false)}>
-                                    <span className="font-medium text-sm">Application Update</span>
-                                    <span className="text-xs text-muted-foreground">Your application for Senior Designer at TechCorp was viewed.</span>
-                                    <span className="text-[10px] text-muted-foreground mt-1">10 min ago</span>
+                                <div className="max-h-[300px] overflow-auto py-2">
+                                    {notifications.length === 0 ? (
+                                        <div className="px-4 py-3 text-sm text-muted-foreground text-center">No notifications</div>
+                                    ) : (
+                                        notifications.map((notif: any) => (
+                                            <div key={notif.id} className={`flex flex-col items-start gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer ${notif.read ? 'opacity-70' : ''}`} onClick={async () => { await markAsRead(notif.id); setNotifications(notifications.map(n => n.id === notif.id ? {...n, read: true} : n)); setShowNotifications(false) }}>
+                                                <span className="font-medium text-sm capitalize">{notif.type.replace('_', ' ').toLowerCase()}</span>
+                                                <span className="text-xs text-muted-foreground">{notif.message}</span>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
-                                <div className="flex flex-col items-start gap-1 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setShowNotifications(false)}>
-                                    <span className="font-medium text-sm">New Interview Invite</span>
-                                    <span className="text-xs text-muted-foreground">Stark Industries invited you to schedule a technical screen.</span>
-                                    <span className="text-[10px] text-muted-foreground mt-1">2 hours ago</span>
+                                <div className="border-t p-2">
+                                    <Button variant="ghost" className="w-full text-xs" size="sm" onClick={handleMarkAllAsRead}>Mark all as read</Button>
                                 </div>
-                            </div>
                         </div>
                     )}
                 </div>

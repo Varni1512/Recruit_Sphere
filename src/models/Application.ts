@@ -40,7 +40,7 @@ const ApplicationSchema: Schema = new Schema({
     collegeBranch: { type: String, required: true },
     qualifications: { type: String, required: true },
     gender: { type: String, required: true },
-    status: { type: String, default: "Pending", enum: ["Pending", "Reviewed", "Rejected", "Accepted"] },
+    status: { type: String, default: "Applied", enum: ["Applied", "Pending", "Reviewed", "Rejected", "Accepted", "Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"] },
     createdAt: { type: Date, default: Date.now }
 });
 

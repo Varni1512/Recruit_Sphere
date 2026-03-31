@@ -259,7 +259,7 @@ export async function getAllApplications() {
             success: true,
             applications: apps.map((app: any) => ({
                 id: app._id.toString(),
-                jobId: app.jobId,
+                jobId: app.jobId.toString(),
                 role: jobMap[app.jobId] || "Unknown Role",
                 name: `${app.firstName} ${app.lastName}`,
                 email: app.email,
@@ -302,19 +302,22 @@ export async function getCandidateApplications(candidateId: string) {
                 const job = jobMap[app.jobId];
                 return {
                     id: app._id.toString(),
-                    jobId: app.jobId,
+                    jobId: app.jobId.toString(),
                     role: job?.title || "Unknown Role",
                     company: job?.company === "Acme Corp" ? "Recruit Sphere" : (job?.company || "Recruit Sphere"),
                     location: job?.location || "Unknown Location",
                     appliedDate: app.createdAt ? formatDistanceToNow(new Date(app.createdAt), { addSuffix: true }) : "recently",
                     status: app.status || "Applied",
                     resumeScore: Math.floor(Math.random() * 20) + 80, // Mock score
-                    pipeline: ["Applied", "Screened", "Interview", "Offer", "Hired"],
+                    pipeline: ["Applied", "Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"],
                     currentStageIndex: app.status === "Applied" ? 0 : 
-                                       app.status === "Interviewing" || app.status === "Screening" || app.status === "Interview" ? 1 : 
-                                       app.status === "Offer" ? 3 : 
-                                       app.status === "Hired" ? 4 : 
-                                       app.status === "Rejected" ? 1 : 0, 
+                                       app.status === "Shortlisted" ? 1 : 
+                                       app.status === "Coding Round" ? 2 : 
+                                       app.status === "Apptitude Round" ? 3 : 
+                                       app.status === "AI Interview Round" ? 4 : 
+                                       app.status === "Interview Round" ? 5 : 
+                                       (app.status === "Hire" || app.status === "Offer" || app.status === "Hired") ? 6 : 
+                                       app.status === "Rejected" ? -1 : 0,
                 }
             })
         }
@@ -342,6 +345,25 @@ export async function updateApplicationStatus(id: string, status: string) {
         revalidatePath('/candidate/jobs')
         return { success: true }
     } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function withdrawApplication(id: string) {
+    try {
+        await connectToDatabase()
+        const app = await Application.findById(id)
+        if (app) {
+            await Job.findByIdAndUpdate(app.jobId, { $inc: { candidatesCount: -1 } })
+            await Application.findByIdAndDelete(id)
+            revalidatePath('/candidate/applications')
+            revalidatePath('/candidate/dashboard')
+            revalidatePath('/candidates')
+            return { success: true }
+        }
+        return { success: false, error: "Application not found" }
+    } catch (error: any) {
+        console.error("Failed to withdraw application:", error)
         return { success: false, error: error.message }
     }
 }

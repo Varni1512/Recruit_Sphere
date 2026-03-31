@@ -26,7 +26,7 @@ import { Separator } from "@/components/ui/separator"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { auth } from "@/lib/localAuth"
-import { getCandidateApplications } from "@/app/actions/jobActions"
+import { getCandidateApplications, withdrawApplication } from "@/app/actions/jobActions"
 
 export default function CandidateApplicationsPage() {
     const router = useRouter()
@@ -93,11 +93,11 @@ export default function CandidateApplicationsPage() {
                                             </div>
                                             <Badge
                                                 variant={
-                                                    app.status === 'Interviewing' ? 'default' :
-                                                        app.status === 'Rejected' ? 'destructive' :
-                                                            app.status === 'Screening' ? 'secondary' : 'outline'
+                                                    app.status === 'Hire' || app.status === 'Offer' ? 'default' :
+                                                    app.status === 'Rejected' ? 'destructive' :
+                                                    app.status === 'Applied' ? 'outline' : 'secondary'
                                                 }
-                                                className="uppercase px-2"
+                                                className={`uppercase px-2 ${app.status === 'Hire' || app.status === 'Offer' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
                                             >
                                                 {app.status}
                                             </Badge>
@@ -173,10 +173,22 @@ export default function CandidateApplicationsPage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Options</DropdownMenuLabel>
-                                                    <DropdownMenuItem>Withdraw Application</DropdownMenuItem>
-                                                    <DropdownMenuItem>Update Resume</DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem>Contact Recruiter</DropdownMenuItem>
+                                                    <DropdownMenuItem 
+                                                        className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
+                                                        onClick={async () => {
+                                                            const confirmed = window.confirm("Are you sure you want to withdraw this application? This action cannot be undone.");
+                                                            if (confirmed) {
+                                                                const res = await withdrawApplication(app.id);
+                                                                if (res.success) {
+                                                                    setMyApplications(prev => prev.filter(a => a.id !== app.id));
+                                                                } else {
+                                                                    alert("Failed to withdraw application.");
+                                                                }
+                                                            }
+                                                        }}
+                                                    >
+                                                        Withdraw Application
+                                                    </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </div>

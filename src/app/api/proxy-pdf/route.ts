@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+function isPdfUrl(url: string) {
+    return /\.pdf($|\?)/i.test(url);
+}
+
+function normalizeCloudinaryUrl(url: string) {
+    return url.startsWith("http://res.cloudinary.com") ? url.replace("http://", "https://") : url;
+}
+
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     let url = searchParams.get("url");
@@ -8,25 +16,49 @@ export async function GET(request: NextRequest) {
         return new NextResponse("Missing url parameter", { status: 400 });
     }
 
-    // Fix HTTP to HTTPS if necessary
-    if (url.startsWith('http://res.cloudinary.com')) {
-        url = url.replace('http://', 'https://');
-    }
+    url = normalizeCloudinaryUrl(url);
 
     try {
-        const response = await fetch(url);
+        const range = request.headers.get("range");
+        const response = await fetch(url, {
+            headers: range ? { range } : undefined,
+        });
         
+        if (response.status === 401 && url.includes('cloudinary.com')) {
+            return new NextResponse(
+                "Access to this PDF is blocked by Cloudinary's security settings for free accounts. Since uploads are now stored locally, please delete this resume and re-upload it to view and download it properly.", 
+                { 
+                    status: 401, 
+                    headers: { "Content-Type": "text/plain" } 
+                }
+            );
+        }
+
         if (!response.ok) {
             return new NextResponse("Failed to fetch PDF", { status: response.status });
         }
 
         const buffer = await response.arrayBuffer();
+        const upstreamType = response.headers.get("content-type") || "application/octet-stream";
+        const contentType = isPdfUrl(url) ? "application/pdf" : upstreamType;
+        const fileNameFromUrl = url.split("/").pop()?.split("?")[0] || "resume";
+        const contentDisposition = `inline; filename="${fileNameFromUrl}"`;
+        const contentRange = response.headers.get("content-range");
+        const acceptRanges = response.headers.get("accept-ranges");
+        const contentLength = response.headers.get("content-length");
+
+        const status = response.status === 206 ? 206 : 200;
 
         return new NextResponse(buffer, {
+            status,
             headers: {
-                "Content-Type": "application/pdf",
-                "Content-Disposition": "inline; filename=\"resume.pdf\"",
-                "Cache-Control": "public, max-age=31536000, immutable",
+                "Content-Type": contentType,
+                "Content-Disposition": contentDisposition,
+                ...(contentRange ? { "Content-Range": contentRange } : {}),
+                ...(contentLength ? { "Content-Length": contentLength } : {}),
+                ...(acceptRanges ? { "Accept-Ranges": acceptRanges } : { "Accept-Ranges": "bytes" }),
+                // Avoid caching blank/error previews while debugging and during frequent updates.
+                "Cache-Control": "no-store",
             },
         });
     } catch (error) {

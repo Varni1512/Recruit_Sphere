@@ -25,6 +25,10 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuSubContent,
+    DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu"
 import {
     Sheet,
@@ -43,6 +47,26 @@ import {
 } from "@/components/ui/dialog"
 
 import { getAllApplications, updateApplicationStatus } from "@/app/actions/jobActions"
+import { StatusActionItem, RejectActionItem } from "./StatusActions"
+
+const normalizeResumeUrl = (url: string) =>
+    url.startsWith("http://res.cloudinary.com") ? url.replace("http://", "https://") : url
+
+const isPdfResume = (url: string) => /\.pdf($|\?)/i.test(url)
+
+const getProxyResumeUrl = (url: string) =>
+    url.startsWith("http") ? `/api/proxy-pdf?url=${encodeURIComponent(normalizeResumeUrl(url))}` : url
+
+const getInlinePreviewUrl = (url: string) => {
+    const normalizedUrl = normalizeResumeUrl(url)
+    if (isPdfResume(normalizedUrl)) {
+        return getProxyResumeUrl(normalizedUrl)
+    }
+    if (normalizedUrl.startsWith("http")) {
+        return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(normalizedUrl)}`
+    }
+    return normalizedUrl
+}
 
 export default async function CandidatesPage() {
     const res = await getAllApplications()
@@ -108,10 +132,11 @@ export default async function CandidatesPage() {
                                 <TableCell>
                                     <Badge
                                         variant={
-                                            candidate.status === "Offer" ? "default" :
-                                                candidate.status === "Interview" ? "secondary" :
-                                                    candidate.status === "Shortlisted" ? "outline" : "default"
+                                            candidate.status === "Hire" || candidate.status === "Offer" ? "default" :
+                                            candidate.status === "Rejected" ? "destructive" :
+                                            candidate.status === "Applied" ? "outline" : "secondary"
                                         }
+                                        className={candidate.status === "Hire" || candidate.status === "Offer" ? "bg-green-600 hover:bg-green-700 text-white" : ""}
                                     >
                                         {candidate.status}
                                     </Badge>
@@ -222,14 +247,14 @@ export default async function CandidatesPage() {
                                                                         <DialogHeader className="p-4 border-b shrink-0 flex flex-row items-center justify-between">
                                                                             <DialogTitle>Resume Preview</DialogTitle>
                                                                             <Button size="sm" asChild className="mr-6">
-                                                                                <a href={candidate.resumeUrl.startsWith('http') ? `/api/proxy-pdf?url=${encodeURIComponent(candidate.resumeUrl)}` : candidate.resumeUrl} download="resume.pdf" target="_blank" rel="noopener noreferrer">
+                                                                                <a href={getProxyResumeUrl(candidate.resumeUrl)} download="resume" target="_blank" rel="noopener noreferrer">
                                                                                     <Download className="h-4 w-4 mr-2" /> Download Document
                                                                                 </a>
                                                                             </Button>
                                                                         </DialogHeader>
                                                                         <div className="flex-1 overflow-hidden" style={{ minHeight: "50vh" }}>
                                                                             <iframe 
-                                                                                src={candidate.resumeUrl.startsWith('http') ? `/api/proxy-pdf?url=${encodeURIComponent(candidate.resumeUrl)}` : candidate.resumeUrl} 
+                                                                                src={getInlinePreviewUrl(candidate.resumeUrl)}
                                                                                 className="w-full h-full border-0 bg-white" 
                                                                                 title="Resume Preview" 
                                                                             />
@@ -237,7 +262,7 @@ export default async function CandidatesPage() {
                                                                     </DialogContent>
                                                                 </Dialog>
                                                                 <Button size="sm" variant="secondary" asChild>
-                                                                    <a href={candidate.resumeUrl.startsWith('http') ? `/api/proxy-pdf?url=${encodeURIComponent(candidate.resumeUrl)}` : candidate.resumeUrl} download>
+                                                                    <a href={getProxyResumeUrl(candidate.resumeUrl)} download>
                                                                         <Download className="h-4 w-4" />
                                                                     </a>
                                                                 </Button>
@@ -263,24 +288,33 @@ export default async function CandidatesPage() {
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                             <DropdownMenuItem>Send Email</DropdownMenuItem>
-                                            <DropdownMenuItem asChild>
-                                                <form action={async () => {
-                                                    "use server";
-                                                    const nextStatus = candidate.status === "Applied" ? "Shortlisted" : candidate.status === "Shortlisted" ? "Interview" : candidate.status === "Interview" ? "Offer" : candidate.status;
-                                                    await updateApplicationStatus(candidate.id, nextStatus);
-                                                }}>
-                                                    <button type="submit" className="w-full text-left cursor-default">Move to Next Stage</button>
-                                                </form>
-                                            </DropdownMenuItem>
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger>Update Status</DropdownMenuSubTrigger>
+                                                <DropdownMenuPortal>
+                                                    <DropdownMenuSubContent>
+                                                        {["Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"].map((stage) => {
+                                                            const stages = ["Applied", "Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"];
+                                                            const currentIndex = stages.indexOf(candidate.status);
+                                                            const targetIndex = stages.indexOf(stage);
+                                                            const isDisabled = targetIndex <= currentIndex || candidate.status === "Rejected";
+
+                                                            return (
+                                                                <StatusActionItem 
+                                                                    key={stage} 
+                                                                    stage={stage} 
+                                                                    candidateId={candidate.id} 
+                                                                    isDisabled={isDisabled} 
+                                                                />
+                                                            );
+                                                        })}
+                                                    </DropdownMenuSubContent>
+                                                </DropdownMenuPortal>
+                                            </DropdownMenuSub>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem asChild className="text-destructive">
-                                                <form action={async () => {
-                                                    "use server";
-                                                    await updateApplicationStatus(candidate.id, "Rejected");
-                                                }}>
-                                                    <button type="submit" className="w-full text-left cursor-default">Reject Candidate</button>
-                                                </form>
-                                            </DropdownMenuItem>
+                                            <RejectActionItem 
+                                                candidateId={candidate.id} 
+                                                isDisabled={candidate.status === "Rejected" || candidate.status === "Hire"} 
+                                            />
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>

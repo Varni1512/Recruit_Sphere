@@ -1,6 +1,18 @@
 import { KanbanBoard } from "@/components/pipeline/kanban-board"
+import { getAllApplications } from "@/app/actions/jobActions"
 
-export default function PipelinePage() {
+export default async function PipelinePage() {
+    const res = await getAllApplications()
+    const candidates = res.success ? res.applications : []
+
+    const formattedCandidates = candidates.map((app: any) => ({
+        id: app.id,
+        name: app.name,
+        role: app.role,
+        score: app.score,
+        status: app.status,
+    }))
+
     return (
         <div className="flex flex-col flex-1 w-full relative h-[calc(100vh-8rem)]">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 mb-6">
@@ -12,7 +24,7 @@ export default function PipelinePage() {
                 </div>
             </div>
             <div className="flex-1 overflow-hidden">
-                <KanbanBoard />
+                <KanbanBoard initialCandidates={formattedCandidates} />
             </div>
         </div>
     )

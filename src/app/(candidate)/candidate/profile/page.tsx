@@ -33,6 +33,26 @@ import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 
+const normalizeResumeUrl = (url: string) =>
+    url.startsWith("http://res.cloudinary.com") ? url.replace("http://", "https://") : url
+
+const isPdfResume = (url: string, fileName: string) =>
+    /\.pdf($|\?)/i.test(url) || /\.pdf$/i.test(fileName)
+
+const getProxyResumeUrl = (url: string) =>
+    url.startsWith("http") ? `/api/proxy-pdf?url=${encodeURIComponent(normalizeResumeUrl(url))}` : url
+
+const getInlinePreviewUrl = (url: string, fileName: string) => {
+    const normalizedUrl = normalizeResumeUrl(url)
+    if (isPdfResume(normalizedUrl, fileName)) {
+        return getProxyResumeUrl(normalizedUrl)
+    }
+    if (normalizedUrl.startsWith("http")) {
+        return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(normalizedUrl)}`
+    }
+    return normalizedUrl
+}
+
 export default function CandidateProfilePage() {
     const [summary, setSummary] = useState("")
     const [skills, setSkills] = useState<string[]>([])
@@ -532,9 +552,18 @@ export default function CandidateProfilePage() {
                                     <div className="flex items-center gap-3">
                                         <FileText className="h-8 w-8 text-primary shrink-0" />
                                         <div className="flex flex-col min-w-0">
-                                            <a href={resumeUrl.startsWith("http") ? `/api/proxy-pdf?url=${encodeURIComponent(resumeUrl)}` : resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline text-primary">
-                                                {resumeName || "Candidate Resume"}
-                                            </a>
+                                            {resumeUrl?.includes("res.cloudinary.com") && isPdfResume(resumeUrl, resumeName || "") ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium truncate text-muted-foreground line-through">
+                                                        {resumeName || "Candidate Resume"}
+                                                    </span>
+                                                    <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4">Action Required</Badge>
+                                                </div>
+                                            ) : (
+                                                <a href={getProxyResumeUrl(resumeUrl)} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline text-primary">
+                                                    {resumeName || "Candidate Resume"}
+                                                </a>
+                                            )}
                                             <p className="text-xs text-muted-foreground">Attached</p>
                                         </div>
                                     </div>
@@ -548,14 +577,33 @@ export default function CandidateProfilePage() {
                                             <DialogContent className="max-w-4xl w-[90vw] h-[90vh] flex flex-col p-0 gap-0">
                                                 <DialogHeader className="p-4 border-b shrink-0 flex flex-row items-center justify-between">
                                                     <DialogTitle>Resume Preview</DialogTitle>
-                                                    <Button size="sm" asChild className="mr-6">
-                                                        <a href={resumeUrl.startsWith("http") ? `/api/proxy-pdf?url=${encodeURIComponent(resumeUrl)}` : resumeUrl} download="resume.pdf" target="_blank" rel="noopener noreferrer">
-                                                            <Download className="h-4 w-4 mr-2" /> Download Document
-                                                        </a>
-                                                    </Button>
+                                                    {!(resumeUrl?.includes("res.cloudinary.com") && isPdfResume(resumeUrl, resumeName || "")) && (
+                                                        <Button size="sm" asChild className="mr-6">
+                                                            <a href={getProxyResumeUrl(resumeUrl)} download={resumeName || "resume"} target="_blank" rel="noopener noreferrer">
+                                                                <Download className="h-4 w-4 mr-2" /> Download Document
+                                                            </a>
+                                                        </Button>
+                                                    )}
                                                 </DialogHeader>
-                                                <div className="flex-1 overflow-hidden" style={{ minHeight: "50vh" }}>
-                                                    <iframe src={resumeUrl.startsWith("http") ? `/api/proxy-pdf?url=${encodeURIComponent(resumeUrl)}` : resumeUrl} className="w-full h-full border-0 bg-white" title="Resume Preview" />
+                                                <div className="flex-1 overflow-hidden relative bg-muted/30" style={{ minHeight: "50vh" }}>
+                                                    {resumeUrl?.includes("res.cloudinary.com") && isPdfResume(resumeUrl, resumeName || "") ? (
+                                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+                                                            <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mb-4">
+                                                                <FileText className="h-10 w-10 text-muted-foreground" />
+                                                            </div>
+                                                            <h3 className="text-xl font-semibold mb-2">Resume Unavailable</h3>
+                                                            <p className="text-muted-foreground max-w-md">
+                                                                This PDF was uploaded using an older method and is currently blocked by security settings. 
+                                                                To view and download your resume properly, please close this window, click the <Trash2 className="inline h-4 w-4 mx-1 text-destructive" /> icon to remove it, and upload your resume again.
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <iframe
+                                                            src={getInlinePreviewUrl(resumeUrl, resumeName)}
+                                                            className="w-full h-full border-0 bg-white"
+                                                            title="Resume Preview"
+                                                        />
+                                                    )}
                                                 </div>
                                             </DialogContent>
                                         </Dialog>

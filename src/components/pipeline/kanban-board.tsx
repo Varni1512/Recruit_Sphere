@@ -22,6 +22,7 @@ import {
 
 import { KanbanColumn } from "./kanban-column"
 import { KanbanCard } from "./kanban-card"
+import { updateApplicationStatus } from "@/app/actions/jobActions"
 
 export type Candidate = {
     id: string
@@ -37,25 +38,21 @@ export type Column = {
 }
 
 const defaultColumns: Column[] = [
-    { id: "applied", title: "Applied" },
-    { id: "screened", title: "Screened" },
-    { id: "shortlisted", title: "Shortlisted" },
-    { id: "interview", title: "Interview" },
-    { id: "offer", title: "Offer" },
-    { id: "hired", title: "Hired" },
+    { id: "Applied", title: "Applied" },
+    { id: "Shortlisted", title: "Shortlisted" },
+    { id: "Coding Round", title: "Coding Round" },
+    { id: "Apptitude Round", title: "Apptitude Round" },
+    { id: "AI Interview Round", title: "AI Interview Round" },
+    { id: "Interview Round", title: "Interview Round" },
+    { id: "Hire", title: "Hire" },
+    { id: "Rejected", title: "Rejected" },
 ]
 
-const initialCandidates: Candidate[] = [
-    { id: "1", name: "Alex Carter", role: "Frontend Dev", score: 92, status: "shortlisted" },
-    { id: "2", name: "Sarah Jenkins", role: "UX Designer", score: 88, status: "interview" },
-    { id: "3", name: "Michael Chen", role: "Backend Engineer", score: 75, status: "applied" },
-    { id: "4", name: "Emily Rod", role: "Product Manager", score: 96, status: "offer" },
-    { id: "5", name: "David Kim", role: "Frontend Dev", score: 82, status: "screened" },
-    { id: "6", name: "Alice Wang", role: "Data Scientist", score: 85, status: "applied" },
-    { id: "7", name: "Bob Smith", role: "DevOps", score: 79, status: "screened" },
-]
+interface KanbanBoardProps {
+    initialCandidates: Candidate[]
+}
 
-export function KanbanBoard() {
+export function KanbanBoard({ initialCandidates }: KanbanBoardProps) {
     const [columns] = useState<Column[]>(defaultColumns)
     const [candidates, setCandidates] = useState<Candidate[]>(initialCandidates)
     const [activeId, setActiveId] = useState<string | null>(null)
@@ -153,15 +150,21 @@ export function KanbanBoard() {
                 newCandidates[activeIndex].status = overId as string
                 return arrayMove(newCandidates, activeIndex, activeIndex) // just update status
             })
+            // Persist to DB asynchronously
+            updateApplicationStatus(activeId as string, overId as string).catch(console.error)
         }
     }
 
     function handleDragEnd(event: DragEndEvent) {
-        setActiveId(null)
         const { active, over } = event
+        const activeId = active.id
+        
+        // Record initial status to check if saving is needed
+        const previousStatus = candidates.find(c => c.id === activeId)?.status
+
+        setActiveId(null)
         if (!over) return
 
-        const activeId = active.id
         const overId = over.id
 
         if (activeId === overId) return
@@ -171,9 +174,21 @@ export function KanbanBoard() {
             const overIndex = candidates.findIndex((c) => c.id === overId)
 
             if (overIndex !== -1 && candidates[activeIndex].status === candidates[overIndex].status) {
+                // Determine if status actually changed to persist DB (rare here, handled in handleDragOver, but just in case)
                 return arrayMove(candidates, activeIndex, overIndex)
             }
             return candidates
+        })
+        
+        // Final drag end handler: if it was dropped on another candidate, handleDragOver already updated the UI state.
+        // We ensure DB matches by pushing the active candidate's new status. 
+        // We find the active candidate in the new candidates list reliably.
+        setCandidates((currentCandidates) => {
+            const currentActive = currentCandidates.find((c) => c.id === activeId)
+            if (currentActive && previousStatus !== currentActive.status) {
+                updateApplicationStatus(currentActive.id, currentActive.status).catch(console.error)
+            }
+            return currentCandidates
         })
     }
 }

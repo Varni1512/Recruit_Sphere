@@ -71,7 +71,7 @@ export default function CandidateDashboard() {
         return <div className="flex h-[50vh] flex-col items-center justify-center text-muted-foreground animate-pulse">Loading dashboard...</div>
     }
 
-    const offersReceived = applications.filter(a => a.status === "Offer").length
+    const offersReceived = applications.filter(a => a.status === "Offer" || a.status === "Hire").length
     const recentApplications = applications.slice(0, 4)
 
     return (
@@ -164,10 +164,11 @@ export default function CandidateDashboard() {
                                     </div>
                                     <Badge
                                         variant={
-                                            app.status === 'Interviewing' || app.status === 'Interview' ? 'default' :
-                                                app.status === 'Rejected' ? 'destructive' :
-                                                    app.status === 'Screening' ? 'secondary' : 'outline'
+                                            app.status === 'Hire' || app.status === 'Offer' ? 'default' :
+                                            app.status === 'Rejected' ? 'destructive' :
+                                            app.status === 'Applied' ? 'outline' : 'secondary'
                                         }
+                                        className={app.status === 'Hire' || app.status === 'Offer' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}
                                     >
                                         {app.status}
                                     </Badge>

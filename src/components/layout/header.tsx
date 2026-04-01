@@ -35,6 +35,7 @@ import Link from "next/link"
 
 export function Header() {
   const [showNotifications, setShowNotifications] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<LocalUser | null>(null)
   const [notifications, setNotifications] = useState<any[]>([])
   const notificationRef = useRef<HTMLDivElement>(null)
@@ -74,7 +75,7 @@ export function Header() {
   }, [])
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 mt-0 sm:mt-4">
-      <Sheet>
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
             <Menu className="h-5 w-5" />
@@ -93,7 +94,7 @@ export function Header() {
               Navigation menu
             </SheetDescription>
           </SheetHeader>
-          <SidebarNavItems isMobile />
+          <SidebarNavItems isMobile onNavClick={() => setIsMobileMenuOpen(false)} />
         </SheetContent>
       </Sheet>
       <div className="w-full flex-1">
@@ -116,7 +117,7 @@ export function Header() {
           <span className="sr-only">View notifications</span>
         </Button>
         {showNotifications && (
-          <div className="absolute right-0 top-full mt-2 w-[300px] rounded-md border bg-popover text-popover-foreground shadow-md z-50 animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2">
+          <div className="absolute right-[-40px] sm:right-0 top-full mt-2 w-[280px] sm:w-[300px] max-w-[90vw] rounded-md border bg-popover text-popover-foreground shadow-md z-50 animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2">
             <div className="flex items-center px-4 py-3 border-b bg-muted/20">
               <h4 className="font-semibold text-sm">Notifications</h4>
             </div>

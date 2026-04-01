@@ -88,7 +88,7 @@ export function CandidateHeader() {
                             Navigation menu
                         </SheetDescription>
                     </SheetHeader>
-                    <CandidateSidebarNavItems isMobile />
+                    <CandidateSidebarNavItems isMobile onNavClick={() => setOpen(false)} />
                 </SheetContent>
             </Sheet>
             <div className="w-full flex-1">

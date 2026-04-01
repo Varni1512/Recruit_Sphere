@@ -74,6 +74,20 @@ export default function CandidateApplicationsPage() {
 
             <div className="rounded-xl">
                 <div className="flex flex-col gap-4 pb-10">
+                    {myApplications.length === 0 && !loading && (
+                        <div className="text-center py-16 px-4 border border-dashed rounded-xl bg-muted/10">
+                            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted/30 mb-4">
+                                <FileText className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2">No applications yet</h3>
+                            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                                You haven't applied to any jobs yet. Start exploring opportunities to build your career.
+                            </p>
+                            <Button asChild>
+                                <Link href="/candidate/jobs">Explore Jobs</Link>
+                            </Button>
+                        </div>
+                    )}
                     {myApplications.map((app) => (
                         <Card key={app.id} className="relative overflow-hidden group">
                             {/* Status accent border */}

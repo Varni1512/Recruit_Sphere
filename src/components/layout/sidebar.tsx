@@ -25,7 +25,7 @@ const navItems = [
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
 ]
 
-export function SidebarNavItems({ isMobile }: { isMobile?: boolean }) {
+export function SidebarNavItems({ isMobile, onNavClick }: { isMobile?: boolean, onNavClick?: () => void }) {
     const pathname = usePathname()
     return (
         <nav className="grid gap-1 px-4">
@@ -35,6 +35,7 @@ export function SidebarNavItems({ isMobile }: { isMobile?: boolean }) {
                     <Link
                         key={item.href}
                         href={item.href}
+                        onClick={onNavClick}
                         className={cn(
                             "flex items-center gap-3 rounded-lg px-3 py-2 font-medium transition-all hover:text-primary",
                             isMobile ? "text-base py-3" : "text-sm",

@@ -142,7 +142,7 @@ export default function CandidateDashboard() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="lg:col-span-4">
+                <Card className="md:col-span-2 lg:col-span-4">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
                             <CardTitle>Recent Applications</CardTitle>
@@ -181,7 +181,7 @@ export default function CandidateDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-3">
+                <Card className="md:col-span-2 lg:col-span-3">
                     <CardHeader>
                         <CardTitle>Upcoming Interviews</CardTitle>
                         <CardDescription>Don't be late for these scheduled calls.</CardDescription>

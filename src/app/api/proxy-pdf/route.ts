@@ -39,10 +39,10 @@ export async function GET(request: NextRequest) {
         }
 
         const buffer = await response.arrayBuffer();
-        const upstreamType = response.headers.get("content-type") || "application/octet-stream";
-        const contentType = isPdfUrl(url) ? "application/pdf" : upstreamType;
-        const fileNameFromUrl = url.split("/").pop()?.split("?")[0] || "resume";
-        const contentDisposition = `inline; filename="${fileNameFromUrl}"`;
+        // Force PDF content type for previews to override Cloudinary's raw stream default
+        const contentType = "application/pdf";
+        const fileNameFromUrl = url.split("/").pop()?.split("?")[0] || "resume.pdf";
+        const contentDisposition = `inline; filename="${fileNameFromUrl.endsWith('.pdf') ? fileNameFromUrl : fileNameFromUrl + '.pdf'}"`;
         const contentRange = response.headers.get("content-range");
         const acceptRanges = response.headers.get("accept-ranges");
         const contentLength = response.headers.get("content-length");

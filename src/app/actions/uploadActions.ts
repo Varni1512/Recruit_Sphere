@@ -17,13 +17,16 @@ export async function uploadToCloudinary(formData: FormData) {
         const buffer = Buffer.from(arrayBuffer)
         const ext = file.name.split('.').pop()?.toLowerCase() || "pdf"
         const isPdf = ext === 'pdf'
+        const safeName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_")
         
         // Upload to Cloudinary using upload_stream
         const result = await new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {
                     resource_type: isPdf ? 'raw' : 'auto',
-                    folder: 'recruit_sphere_uploads'
+                    folder: 'recruit_sphere_uploads',
+                    // Force the filename to include the correct extension for raw resources
+                    public_id: `${safeName}_${Date.now()}${isPdf ? '.pdf' : ''}`
                 },
                 (error, result) => {
                     if (error) reject(error)

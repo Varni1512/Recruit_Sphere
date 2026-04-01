@@ -559,15 +559,35 @@ export default function CandidateProfilePage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-8 w-8 hover:bg-muted" 
-                                            title="View Resume"
-                                            onClick={() => window.open(getProxyResumeUrl(resumeUrl), '_blank')}
-                                        >
-                                            <Eye className="h-4 w-4" />
-                                        </Button>
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="h-8 w-8 hover:bg-muted" 
+                                                    title="View Resume"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-4xl w-[90vw] h-[90vh] flex flex-col p-0 gap-0">
+                                                <DialogHeader className="p-4 border-b shrink-0 flex flex-row items-center justify-between">
+                                                    <DialogTitle>Resume Preview</DialogTitle>
+                                                    <Button size="sm" asChild className="mr-6">
+                                                        <a href={getProxyResumeUrl(resumeUrl)} download={resumeName || "resume"} target="_blank" rel="noopener noreferrer">
+                                                            <Download className="h-4 w-4 mr-2" /> Download Document
+                                                        </a>
+                                                    </Button>
+                                                </DialogHeader>
+                                                <div className="flex-1 overflow-hidden relative bg-muted/30" style={{ minHeight: "50vh" }}>
+                                                    <iframe
+                                                        src={getInlinePreviewUrl(resumeUrl, resumeName)}
+                                                        className="w-full h-full border-0 bg-white"
+                                                        title="Resume Preview"
+                                                    />
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 

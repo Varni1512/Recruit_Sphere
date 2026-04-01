@@ -236,12 +236,31 @@ export default async function CandidatesPage() {
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-2">
-                                                                <Button size="sm" variant="outline" asChild>
-                                                                    <a href={getProxyResumeUrl(candidate.resumeUrl)} target="_blank" rel="noopener noreferrer">
-                                                                        <Eye className="h-4 w-4 mr-2" />
-                                                                        View PDF
-                                                                    </a>
-                                                                </Button>
+                                                                <Dialog>
+                                                                    <DialogTrigger asChild>
+                                                                        <Button size="sm" variant="outline">
+                                                                            <Eye className="h-4 w-4 mr-2" />
+                                                                            View PDF
+                                                                        </Button>
+                                                                    </DialogTrigger>
+                                                                    <DialogContent className="max-w-4xl w-[90vw] h-[90vh] flex flex-col p-0 gap-0">
+                                                                        <DialogHeader className="p-4 border-b shrink-0 flex flex-row items-center justify-between">
+                                                                            <DialogTitle>Resume Preview</DialogTitle>
+                                                                            <Button size="sm" asChild className="mr-6">
+                                                                                <a href={getProxyResumeUrl(candidate.resumeUrl)} download="resume" target="_blank" rel="noopener noreferrer">
+                                                                                    <Download className="h-4 w-4 mr-2" /> Download Document
+                                                                                </a>
+                                                                            </Button>
+                                                                        </DialogHeader>
+                                                                        <div className="flex-1 overflow-hidden" style={{ minHeight: "50vh" }}>
+                                                                            <iframe 
+                                                                                src={getInlinePreviewUrl(candidate.resumeUrl)}
+                                                                                className="w-full h-full border-0 bg-white" 
+                                                                                title="Resume Preview" 
+                                                                            />
+                                                                        </div>
+                                                                    </DialogContent>
+                                                                </Dialog>
                                                                 <Button size="sm" variant="secondary" asChild>
                                                                     <a href={getProxyResumeUrl(candidate.resumeUrl)} download target="_blank" rel="noopener noreferrer">
                                                                         <Download className="h-4 w-4" />

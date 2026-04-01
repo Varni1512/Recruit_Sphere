@@ -1,31 +1,41 @@
 'use server'
 
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+import { v2 as cloudinary } from 'cloudinary'
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+})
 
 export async function uploadToCloudinary(formData: FormData) {
-    // Actually upload locally to bypass Cloudinary PDF viewing restrictions
     try {
         const file = formData.get("file") as File
         if (!file) return { error: "No file provided" }
 
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
-        const ext = file.name.split('.').pop() || "pdf"
-        const safeName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_")
-        const fileName = `${safeName}_${Date.now()}.${ext}`
+        const ext = file.name.split('.').pop()?.toLowerCase() || "pdf"
+        const isPdf = ext === 'pdf'
         
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads')
-        // Ensure directory exists
-        try {
-            await mkdir(uploadDir, { recursive: true })
-        } catch (e) {}
+        // Upload to Cloudinary using upload_stream
+        const result = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    resource_type: isPdf ? 'raw' : 'auto',
+                    folder: 'recruit_sphere_uploads'
+                },
+                (error, result) => {
+                    if (error) reject(error)
+                    else resolve(result)
+                }
+            )
+            uploadStream.end(buffer)
+        })
 
-        const filePath = path.join(uploadDir, fileName)
-        await writeFile(filePath, buffer)
+        const uploadResult = result as any
 
-        // Return root relative path which next.js can serve from public folder
-        return { url: `/uploads/${fileName}`, name: file.name }
+        return { url: uploadResult.secure_url, name: file.name }
     } catch (error: any) {
         console.error("Upload Error:", error)
         return { error: error.message || "Failed to process upload" }

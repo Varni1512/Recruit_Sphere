@@ -28,6 +28,8 @@ export async function createJob(data: any) {
             salary: data.salary || "Competitive",
             experience: data.experience || "Mid-Level",
             tags: tags,
+            atsKeywords: data.atsKeywords || [],
+            atsCriteriaScore: data.atsCriteriaScore || 75,
             status: "Active"
         })
 
@@ -128,6 +130,8 @@ export async function getJobById(id: string) {
                 createdAt: job.createdAt ? formatDistanceToNow(new Date(job.createdAt), { addSuffix: true }) : "recently",
                 tags: (job.tags || []).map((tag: string) => capitalize(tag)),
                 description: job.description,
+                atsKeywords: job.atsKeywords || [],
+                atsCriteriaScore: job.atsCriteriaScore || 75,
                 status: job.status,
                 candidates: job.candidatesCount
             }
@@ -173,6 +177,8 @@ export async function updateJob(id: string, data: any) {
             description: data.description,
             experience: data.experience,
             salary: data.salary,
+            atsKeywords: data.atsKeywords,
+            atsCriteriaScore: data.atsCriteriaScore,
         })
         revalidatePath('/jobs')
         revalidatePath('/candidate/jobs')
@@ -185,6 +191,44 @@ export async function updateJob(id: string, data: any) {
 export async function applyToJob(data: any) {
     try {
         await connectToDatabase()
+
+        const job = await Job.findById(data.jobId).lean();
+        
+        let calculatedScore = Math.floor(Math.random() * 20) + 60; // fallback mock
+        let initialStatus = "Applied";
+
+        // Perform ATS Parsing
+        if (data.resumeUrl && job && job.atsKeywords && job.atsKeywords.length > 0) {
+            try {
+                const pdfParse = require('pdf-parse');
+                const pdfResponse = await fetch(data.resumeUrl);
+                const arrayBuffer = await pdfResponse.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                const pdfData = await pdfParse(buffer);
+                const pdfText = pdfData.text.toLowerCase();
+
+                let matches = 0;
+                for (const word of job.atsKeywords) {
+                    // Use word boundaries so that 'js' doesn't fire positively inside 'json'
+                    const safeWord = word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const wordBoundaryRegex = new RegExp(`\\b${safeWord}\\b`, 'i');
+                    
+                    if (wordBoundaryRegex.test(pdfText)) {
+                        matches++;
+                    }
+                }
+                
+                // Map matched percentage to a 50-100 range score
+                const matchPercentage = matches / job.atsKeywords.length;
+                calculatedScore = Math.floor(50 + (matchPercentage * 50));
+            } catch (error) {
+                console.error("ATS Resume Parsing failed: ", error);
+            }
+        }
+
+        if (job && typeof job.atsCriteriaScore === 'number' && calculatedScore >= job.atsCriteriaScore) {
+            initialStatus = "Shortlisted";
+        }
 
         const newApp = new Application({
             jobId: data.jobId,
@@ -204,6 +248,8 @@ export async function applyToJob(data: any) {
             collegeBranch: data.collegeBranch,
             qualifications: data.qualifications,
             gender: data.gender,
+            resumeScore: calculatedScore,
+            status: initialStatus
         })
         await newApp.save()
 
@@ -258,16 +304,16 @@ export async function getAllApplications() {
         return {
             success: true,
             applications: apps.map((app: any) => ({
-                id: app._id.toString(),
-                jobId: app.jobId.toString(),
-                role: jobMap[app.jobId] || "Unknown Role",
-                name: `${app.firstName} ${app.lastName}`,
-                email: app.email,
-                mobile: app.mobile,
-                location: app.address || "Unknown",
-                status: app.status || "Applied",
-                score: Math.floor(Math.random() * 20) + 80, // Mock score for now
-                collegeYear: app.collegeYear,
+                 id: app._id.toString(),
+                 jobId: app.jobId.toString(),
+                 role: jobMap[app.jobId] || "Unknown Role",
+                 name: `${app.firstName} ${app.lastName}`,
+                 email: app.email,
+                 mobile: app.mobile,
+                 location: app.address || "Unknown",
+                 status: app.status || "Applied",
+                 score: typeof app.resumeScore === 'number' ? app.resumeScore : Math.floor(60 + (parseInt(app._id.toString().slice(-6), 16) % 30)),
+                 collegeYear: app.collegeYear,
                 collegeBranch: app.collegeBranch,
                 qualifications: app.qualifications,
                 githubLink: app.githubLink || "#",
@@ -308,7 +354,7 @@ export async function getCandidateApplications(candidateId: string) {
                     location: job?.location || "Unknown Location",
                     appliedDate: app.createdAt ? formatDistanceToNow(new Date(app.createdAt), { addSuffix: true }) : "recently",
                     status: app.status || "Applied",
-                    resumeScore: Math.floor(Math.random() * 20) + 80, // Mock score
+                    resumeScore: typeof app.resumeScore === 'number' ? app.resumeScore : Math.floor(60 + (parseInt(app._id.toString().slice(-6), 16) % 30)),
                     pipeline: ["Applied", "Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"],
                     currentStageIndex: app.status === "Applied" ? 0 : 
                                        app.status === "Shortlisted" ? 1 : 

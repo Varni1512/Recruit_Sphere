@@ -13,6 +13,8 @@ export interface IJob extends Document {
     experience: string;
     salary: string;
     tags: string[];
+    atsKeywords: string[];
+    atsCriteriaScore: number;
     createdAt: Date;
     recruiterId?: string;
 }
@@ -30,6 +32,8 @@ const JobSchema: Schema = new Schema({
     experience: { type: String, default: "Mid-Level" },
     salary: { type: String, default: "Competitive" },
     tags: { type: [String], default: [] },
+    atsKeywords: { type: [String], default: [] },
+    atsCriteriaScore: { type: Number, default: 75 },
     createdAt: { type: Date, default: Date.now },
     recruiterId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false }
 });

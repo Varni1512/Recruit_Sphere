@@ -1,11 +1,12 @@
 "use client"
 
-import { ArrowLeft, Save } from "lucide-react"
+import { ArrowLeft, Save, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { getJobById, updateJob } from "@/app/actions/jobActions"
 import dynamic from 'next/dynamic'
+import { Badge } from "@/components/ui/badge"
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 import { Button } from "@/components/ui/button"
@@ -41,8 +42,18 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
     const [experience, setExperience] = useState("")
     const [salary, setSalary] = useState("")
     const [description, setDescription] = useState("")
+    const [atsKeywords, setAtsKeywords] = useState<string[]>([])
+    const [newKeyword, setNewKeyword] = useState("")
+    const [atsCriteriaScore, setAtsCriteriaScore] = useState<number>(75)
     const [isSaving, setIsSaving] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
+
+    const addKeyword = () => {
+        if (newKeyword.trim() && !atsKeywords.includes(newKeyword.trim())) {
+            setAtsKeywords([...atsKeywords, newKeyword.trim()])
+            setNewKeyword("")
+        }
+    }
 
     useEffect(() => {
         const fetchJob = async () => {
@@ -57,6 +68,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                     setExperience(res.job.experience || "")
                     setSalary(res.job.salary || "")
                     setDescription(res.job.description)
+                    setAtsKeywords(res.job.atsKeywords || [])
+                    setAtsCriteriaScore(res.job.atsCriteriaScore || 75)
                 }
                 setIsLoading(false)
             }
@@ -75,7 +88,9 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 location,
                 experience,
                 salary,
-                description
+                description,
+                atsKeywords,
+                atsCriteriaScore
             })
             if (result.success) {
                 router.push(`/jobs/${id}`)
@@ -208,6 +223,56 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                             />
                         </div>
                     </div>
+
+                    <Separator className="my-4" />
+
+                    <div className="grid gap-2">
+                        <Label>ATS Keyword Targets</Label>
+                        <p className="text-xs text-muted-foreground">Used to automatically score and shortlist incoming resumes.</p>
+                        <div className="flex flex-wrap gap-2 border rounded-md p-3 bg-muted/50 min-h-[80px] content-start">
+                            {atsKeywords.length === 0 ? <p className="text-sm text-muted-foreground">No keywords defined.</p> : null}
+                            {atsKeywords.map((keyword, i) => (
+                                <Badge key={i} variant="secondary" className="flex items-center gap-1 pr-1.5 py-1">
+                                    {keyword}
+                                    <button 
+                                        type="button"
+                                        onClick={() => setAtsKeywords(prev => prev.filter((_, idx) => idx !== i))}
+                                        className="hover:bg-muted-foreground/20 rounded-full p-0.5"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
+                            <Input 
+                                placeholder="Add custom keyword..." 
+                                value={newKeyword} 
+                                onChange={(e) => setNewKeyword(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        addKeyword()
+                                    }
+                                }}
+                            />
+                            <Button type="button" onClick={addKeyword} variant="secondary">Add</Button>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="criteriaScore">Minimum ATS Shortlisting Score (%)</Label>
+                        <Input 
+                            id="criteriaScore" 
+                            type="number" 
+                            min="0" 
+                            max="100" 
+                            value={atsCriteriaScore} 
+                            onChange={(e) => setAtsCriteriaScore(Number(e.target.value))} 
+                        />
+                        <p className="text-xs text-muted-foreground">Candidates must meet or exceed this percentage score to automatically bypass the Applied stage.</p>
+                    </div>
+
                 </CardContent>
                 <CardFooter className="flex justify-end gap-4 border-t px-6 py-4">
                     <Button variant="outline" asChild disabled={isSaving}>

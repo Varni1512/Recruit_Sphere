@@ -552,61 +552,33 @@ export default function CandidateProfilePage() {
                                     <div className="flex items-center gap-3">
                                         <FileText className="h-8 w-8 text-primary shrink-0" />
                                         <div className="flex flex-col min-w-0">
-                                            {resumeUrl?.includes("res.cloudinary.com") && isPdfResume(resumeUrl, resumeName || "") ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-medium truncate text-muted-foreground line-through">
-                                                        {resumeName || "Candidate Resume"}
-                                                    </span>
-                                                    <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4">Action Required</Badge>
-                                                </div>
-                                            ) : (
-                                                <a href={getProxyResumeUrl(resumeUrl)} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline text-primary">
-                                                    {resumeName || "Candidate Resume"}
-                                                </a>
-                                            )}
+                                            <a href={getProxyResumeUrl(resumeUrl)} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline text-primary">
+                                                {resumeName || "Candidate Resume"}
+                                            </a>
                                             <p className="text-xs text-muted-foreground">Attached</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" title="View Resume">
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-4xl w-[90vw] h-[90vh] flex flex-col p-0 gap-0">
-                                                <DialogHeader className="p-4 border-b shrink-0 flex flex-row items-center justify-between">
-                                                    <DialogTitle>Resume Preview</DialogTitle>
-                                                    {!(resumeUrl?.includes("res.cloudinary.com") && isPdfResume(resumeUrl, resumeName || "")) && (
-                                                        <Button size="sm" asChild className="mr-6">
-                                                            <a href={getProxyResumeUrl(resumeUrl)} download={resumeName || "resume"} target="_blank" rel="noopener noreferrer">
-                                                                <Download className="h-4 w-4 mr-2" /> Download Document
-                                                            </a>
-                                                        </Button>
-                                                    )}
-                                                </DialogHeader>
-                                                <div className="flex-1 overflow-hidden relative bg-muted/30" style={{ minHeight: "50vh" }}>
-                                                    {resumeUrl?.includes("res.cloudinary.com") && isPdfResume(resumeUrl, resumeName || "") ? (
-                                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-                                                            <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mb-4">
-                                                                <FileText className="h-10 w-10 text-muted-foreground" />
-                                                            </div>
-                                                            <h3 className="text-xl font-semibold mb-2">Resume Unavailable</h3>
-                                                            <p className="text-muted-foreground max-w-md">
-                                                                This PDF was uploaded using an older method and is currently blocked by security settings. 
-                                                                To view and download your resume properly, please close this window, click the <Trash2 className="inline h-4 w-4 mx-1 text-destructive" /> icon to remove it, and upload your resume again.
-                                                            </p>
-                                                        </div>
-                                                    ) : (
-                                                        <iframe
-                                                            src={getInlinePreviewUrl(resumeUrl, resumeName)}
-                                                            className="w-full h-full border-0 bg-white"
-                                                            title="Resume Preview"
-                                                        />
-                                                    )}
-                                                </div>
-                                            </DialogContent>
-                                        </Dialog>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-8 w-8 hover:bg-muted" 
+                                            title="View Resume"
+                                            onClick={() => window.open(getProxyResumeUrl(resumeUrl), '_blank')}
+                                        >
+                                            <Eye className="h-4 w-4" />
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-8 w-8 hover:bg-muted" 
+                                            title="Download Resume"
+                                            asChild
+                                        >
+                                            <a href={getProxyResumeUrl(resumeUrl)} download={resumeName || "resume"} target="_blank" rel="noopener noreferrer">
+                                                <Download className="h-4 w-4" />
+                                            </a>
+                                        </Button>
                                         {isEditing && (
                                             <Button variant="ghost" size="icon" onClick={handleRemoveResume} className="text-destructive h-8 w-8 shrink-0">
                                                 <Trash2 className="h-4 w-4" />

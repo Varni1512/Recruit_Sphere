@@ -46,7 +46,7 @@ export function CandidateHeader() {
     const handleMarkAllAsRead = async () => {
         if (user?.email) {
             await markAllAsRead(user.email)
-            setNotifications(notifications.map(n => ({...n, read: true})))
+            setNotifications([])
             setShowNotifications(false)
         }
     }
@@ -130,7 +130,7 @@ export function CandidateHeader() {
                                     )}
                                 </div>
                                 <div className="border-t p-2">
-                                    <Button variant="ghost" className="w-full text-xs" size="sm" onClick={handleMarkAllAsRead}>Mark all as read</Button>
+                                    <Button variant="ghost" className="w-full text-xs" size="sm" onClick={handleMarkAllAsRead}>Read All</Button>
                                 </div>
                         </div>
                     )}

@@ -7,7 +7,7 @@ export default function AuthLayout({
     children: React.ReactNode
 }) {
     return (
-        <div className="flex min-h-screen bg-background relative overflow-hidden">
+        <div className="flex h-screen bg-background relative overflow-hidden">
             {/* Left Graphic Panel (Hidden on Mobile) */}
             <div className="hidden lg:flex lg:w-1/2 relative bg-zinc-950 flex-col justify-between p-10 overflow-hidden text-zinc-100">
                 {/* Background Pattern */}
@@ -45,7 +45,7 @@ export default function AuthLayout({
             </div>
 
             {/* Right Form Panel */}
-            <div className="flex w-full lg:w-1/2 flex-col items-center justify-center p-6 sm:p-12 relative bg-background">
+            <div className="flex w-full lg:w-1/2 flex-col items-center justify-center p-6 lg:p-8 relative bg-background overflow-y-auto lg:overflow-hidden">
                 {/* Mobile Logo Only */}
                 <div className="lg:hidden absolute top-8 left-8 flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-md">

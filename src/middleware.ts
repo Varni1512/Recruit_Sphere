@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
     const roleCookie = request.cookies.get('role')?.value
     const path = request.nextUrl.pathname
 
-    const isPublicRoute = path === '/login' || path === '/signup'
+    const isPublicRoute = path === '/login' || path === '/signup' || path === '/forgot-password'
     const isCandidateRoute = path === '/candidate' || path.startsWith('/candidate/')
 
     // Ignore static files, api routes, Next.js internal paths

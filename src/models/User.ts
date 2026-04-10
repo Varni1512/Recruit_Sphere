@@ -20,6 +20,8 @@ export interface IUser extends Document {
     resumeUrl?: string;
     resumeName?: string;
     experiences?: any[];
+    resetPasswordOTP?: string;
+    resetPasswordExpires?: Date;
 }
 
 const UserSchema: Schema = new Schema({
@@ -71,6 +73,8 @@ const UserSchema: Schema = new Schema({
         type: Date,
         default: Date.now,
     },
+    resetPasswordOTP: String,
+    resetPasswordExpires: Date,
 });
 
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>("User", UserSchema);

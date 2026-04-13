@@ -53,7 +53,7 @@ export function getRecruitmentEmailTemplate({
                 </p>
                 
                 <div style="text-align: center; margin-top: 40px;">
-                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/candidate/applications" 
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://recruit-sphere.vercel.app'}/candidate/applications" 
                        style="display: inline-block; background-color: ${color}; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
                        View Application Dashboard
                     </a>

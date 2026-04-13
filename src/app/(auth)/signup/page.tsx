@@ -138,7 +138,7 @@ export default function SignupPage() {
                         )}
                     </CardContent>
                     
-                    <CardFooter className="flex flex-col gap-4 lg:gap-3 pb-6 lg:pb-5 pt-2 lg:pt-1">
+                    <CardFooter className="flex flex-col gap-4 lg:gap-3 pb-6 lg:pb-5 pt-4 lg:pt-4">
                         <Button className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all group" type="submit" disabled={isLoading}>
                             {isLoading ? (
                                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Creating Account...</>

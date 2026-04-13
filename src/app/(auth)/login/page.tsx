@@ -164,7 +164,7 @@ export default function LoginPage() {
                                 name="password" 
                                 autoComplete="current-password" 
                                 required 
-                                className="h-12 bg-muted/30 border-muted-foreground/20 focus:border-primary/50 transition-all" 
+                                className="h-12 bg-muted/30 border-muted-foreground/20 focus:border-primary/50 transition-all " 
                             />
                         </div>
                         {error && (
@@ -178,7 +178,7 @@ export default function LoginPage() {
                         )}
                     </CardContent>
                     
-                    <CardFooter className="flex flex-col gap-4 lg:gap-3 pb-6 lg:pb-5 pt-2 lg:pt-1">
+                    <CardFooter className="flex flex-col gap-4 lg:gap-3 pb-6 lg:pb-5 pt-4 lg:pt-4">
                         <Button className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all group" type="submit" disabled={isLoading}>
                             {isLoading ? (
                                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Signing In...</>

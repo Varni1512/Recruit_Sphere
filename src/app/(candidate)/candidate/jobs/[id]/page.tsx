@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, use } from "react"
-import { MapPin, Briefcase, DollarSign, Calendar, Building2, CheckCircle2, ArrowLeft, Upload, FileText, ExternalLink } from "lucide-react"
+import { useEffect, useState } from "react"
+import { MapPin, Briefcase, DollarSign, Calendar, Building2, CheckCircle2, ArrowLeft, Upload, FileText, ExternalLink, XCircle, AlertCircle, Clock } from "lucide-react"
 import dynamic from 'next/dynamic'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
@@ -23,7 +23,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { auth } from "@/lib/localAuth"
 import { getUserProfile, calculateProfileCompletion } from "@/lib/profileUtils"
-import { getJobById, applyToJob } from "@/app/actions/jobActions"
+import { getJobById, applyToJob, hasUserAppliedToJob } from "@/app/actions/jobActions"
 import { uploadToCloudinary } from "@/app/actions/uploadActions"
 import MarkdownViewer from "@/components/MarkdownViewer"
 import {
@@ -43,6 +43,7 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
     const [canAccess, setCanAccess] = useState(false)
     const [job, setJob] = useState<any>(null)
     const [loadingJob, setLoadingJob] = useState(true)
+    const [existingApplication, setExistingApplication] = useState<any>(null)
 
     // Form fields
     const [firstName, setFirstName] = useState("")
@@ -116,6 +117,20 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
     }
 
     useEffect(() => {
+        const fetchJobData = async (userId: string) => {
+            if (id) {
+                const [jobRes, appRes] = await Promise.all([
+                    getJobById(id),
+                    hasUserAppliedToJob(id, userId)
+                ])
+                if (jobRes.success) setJob(jobRes.job)
+                if (appRes.success && (appRes as any).hasApplied) {
+                    setExistingApplication(appRes)
+                }
+                setLoadingJob(false)
+            }
+        }
+
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 router.push("/login")
@@ -143,7 +158,7 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
                         }
                     }
                 } catch (error) {
-                    console.error("Error reading cached profile for job details page", error)
+                    console.error("Error reading cached profile", error)
                 }
 
                 setEmail(user.email || "")
@@ -159,6 +174,7 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
                         setLinkedinLink(cachedProfile.linkedin || "")
                         setGithubLink(cachedProfile.github || "")
                     }
+                    fetchJobData(user.uid)
                     setCheckingAccess(false)
                     return
                 }
@@ -168,54 +184,30 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
 
                 if (completion >= 80) {
                     setCanAccess(true)
-                    try {
-                        const names = (profile?.fullName || "").split(" ")
-                        setFirstName(names[0] || "")
-                        setLastName(names.slice(1).join(" ") || "")
-                        setMobile(profile?.phone || "")
-                        setAddress((profile as any)?.currentLocation || "")
-                        setLinkedinLink(profile?.linkedin || "")
-                        setGithubLink(profile?.github || "")
-
-                        if (typeof window !== "undefined") {
-                            localStorage.setItem(
-                                cacheKey,
-                                JSON.stringify({
-                                    profile,
-                                    completion,
-                                })
-                            )
-                        }
-                    } catch (error) {
-                        console.error("Error caching profile for job details page", error)
-                    }
+                    const names = (profile?.fullName || "").split(" ")
+                    setFirstName(names[0] || "")
+                    setLastName(names.slice(1).join(" ") || "")
+                    setMobile(profile?.phone || "")
+                    setAddress((profile as any)?.currentLocation || "")
+                    setLinkedinLink(profile?.linkedin || "")
+                    setGithubLink(profile?.github || "")
+                    fetchJobData(user.uid)
                 } else {
                     alert("Please complete at least 80% of your profile before viewing job details.")
                     router.push("/candidate/profile")
                 }
             } catch (error) {
-                console.error("Error checking profile completion for job details page", error)
+                console.error("Error checking profile completion", error)
                 router.push("/candidate/profile")
             } finally {
                 setCheckingAccess(false)
             }
         })
 
-        const fetchJob = async () => {
-            if (id) {
-                const res = await getJobById(id)
-                if (res.success) setJob(res.job)
-                setLoadingJob(false)
-            }
-        }
-        fetchJob()
-
         return () => unsubscribe()
     }, [router, id])
 
-    // Render loading states where applicable
-
-    if (checkingAccess && !canAccess) {
+    if (checkingAccess) {
         return (
             <div className="flex h-[50vh] items-center justify-center">
                 Checking your profile completion...
@@ -223,9 +215,7 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
         )
     }
 
-    if (!canAccess) {
-        return null
-    }
+    if (!canAccess) return null
 
     if (loadingJob) {
         return (
@@ -237,7 +227,7 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
 
     if (!job) {
         return (
-            <div className="flex flex-col items-center justify-center h-full w-full">
+            <div className="flex flex-col items-center justify-center h-full w-full py-20">
                 <h1 className="text-2xl font-bold">Job Not Found</h1>
                 <p className="text-muted-foreground mt-2">The job you are looking for does not exist or has been removed.</p>
                 <Button className="mt-6" asChild>
@@ -389,6 +379,45 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
 
     return (
         <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-4">
+            
+            {/* Application Status Banner */}
+            {existingApplication && (
+                <div className={`mt-4 rounded-xl border p-4 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300 ${
+                    existingApplication.status === 'Rejected' ? 'bg-destructive/5 border-destructive/20' : 
+                    existingApplication.status === 'Shortlisted' ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 border-border'
+                }`}>
+                    <div className="flex items-center gap-4">
+                        <div className={`p-2 rounded-full ${
+                            existingApplication.status === 'Rejected' ? 'bg-destructive/10 text-destructive' : 
+                            existingApplication.status === 'Shortlisted' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                        }`}>
+                            {existingApplication.status === 'Rejected' ? <XCircle className="h-6 w-6" /> : 
+                             existingApplication.status === 'Shortlisted' ? <CheckCircle2 className="h-6 w-6" /> : <Clock className="h-6 w-6" />}
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                Application Status: <Badge variant={existingApplication.status === 'Rejected' ? 'destructive' : 'secondary'}>{existingApplication.status}</Badge>
+                            </h3>
+                            <p className="text-sm text-balance text-muted-foreground mt-1">
+                                {existingApplication.status === 'Rejected' ? 'Unfortunately, you were not selected for this position.' : 
+                                 existingApplication.status === 'Shortlisted' ? 'Great news! Your profile has been shortlisted.' : 'Your application is currently under review.'}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {existingApplication.status === 'Rejected' && existingApplication.rejectionReason && (
+                        <div className="flex-1 max-w-md bg-background/50 p-3 rounded-lg border border-destructive/10 shadow-sm">
+                            <h4 className="text-[10px] font-bold text-destructive uppercase tracking-widest mb-1">Reason for Rejection</h4>
+                            <p className="text-xs italic text-muted-foreground font-medium">"{existingApplication.rejectionReason}"</p>
+                        </div>
+                    )}
+                    
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/candidate/applications">View My Applications</Link>
+                    </Button>
+                </div>
+            )}
+
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 mt-4 sm:mt-0">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" asChild className="shrink-0 group">
@@ -404,7 +433,12 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
                     </div>
                 </div>
                 <div className="flex gap-3 w-full sm:w-auto">
-                    <Button className="w-full sm:w-auto shadow-md" size="lg" onClick={() => setIsApplying(true)}>Apply Now</Button>
+                    {!existingApplication && (
+                        <Button className="w-full sm:w-auto shadow-lg px-8" size="lg" onClick={() => setIsApplying(true)}>Apply Now</Button>
+                    )}
+                    {existingApplication && (
+                        <Button className="w-full sm:w-auto shadow-md" variant="secondary" size="lg" disabled>Already Applied</Button>
+                    )}
                 </div>
             </div>
 
@@ -418,22 +452,6 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
                             <div className="text-muted-foreground">
                                 <MarkdownViewer source={job.description} />
                             </div>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                                Curabitur non nulla sit amet nisl tempus convallis quis ac lectus. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Nulla quis lorem ut libero malesuada feugiat. Donec sollicitudin molestie malesuada.
-                            </p>
-                            <h4 className="font-semibold mt-6 mb-2">Key Responsibilities</h4>
-                            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                                <li>Lead the design and development of core features.</li>
-                                <li>Collaborate with cross-functional teams to define requirements.</li>
-                                <li>Ensure high performance and responsiveness of the application.</li>
-                                <li>Identify and resolve bottlenecks and bugs.</li>
-                            </ul>
-                            <h4 className="font-semibold mt-6 mb-2">Requirements</h4>
-                            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                                <li>Proven experience in the specified domain.</li>
-                                <li>Strong problem-solving and communication skills.</li>
-                                <li>Ability to work independently and as part of a team.</li>
-                            </ul>
                         </CardContent>
                     </Card>
                 </div>
@@ -500,7 +518,7 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-wrap gap-2">
-                                {job.tags.map((tag: string) => (
+                                {(job.tags || []).map((tag: string) => (
                                     <Badge key={tag} variant="secondary" className="font-normal text-xs px-2 py-1">
                                         {tag}
                                     </Badge>

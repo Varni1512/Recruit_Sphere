@@ -16,10 +16,17 @@ export interface IJob extends Document {
     atsKeywords: string[];
     atsCriteriaScore: number;
     deadline?: Date;
+    applicationCloseDays: number;
+    hiringDeadlineDays: number;
+    applicationCloseDate?: Date;
     hiringPipeline: {
         roundName: string;
         totalScore: number;
         passingScore: number;
+    }[];
+    roundSchedule: {
+        roundName: string;
+        date: Date;
     }[];
     createdAt: Date;
     recruiterId?: string;
@@ -41,10 +48,17 @@ const JobSchema: Schema = new Schema({
     atsKeywords: { type: [String], default: [] },
     atsCriteriaScore: { type: Number, default: 75 },
     deadline: { type: Date },
+    applicationCloseDays: { type: Number, default: 7 },
+    hiringDeadlineDays: { type: Number, default: 30 },
+    applicationCloseDate: { type: Date },
     hiringPipeline: [{
         roundName: String,
         totalScore: Number,
         passingScore: Number
+    }],
+    roundSchedule: [{
+        roundName: String,
+        date: Date
     }],
     createdAt: { type: Date, default: Date.now },
     recruiterId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false }

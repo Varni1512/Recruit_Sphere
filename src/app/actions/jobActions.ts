@@ -7,12 +7,41 @@ import Notification from "@/models/Notification"
 import User from "@/models/User"
 import { revalidatePath } from "next/cache"
 import { formatDistanceToNow } from "date-fns"
+import { sendEmail } from "@/lib/email"
+import { getRecruitmentEmailTemplate } from "@/lib/emailTemplates"
 
 const capitalize = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
 export async function createJob(data: any) {
     try {
         await connectToDatabase()
+
+        const applicationCloseDays = Number(data.applicationCloseDays) || 7
+        const hiringDeadlineDays = Number(data.hiringDeadlineDays) || 30
+        
+        const applicationCloseDate = new Date()
+        applicationCloseDate.setDate(applicationCloseDate.getDate() + applicationCloseDays)
+        
+        const deadlineDate = new Date()
+        deadlineDate.setDate(deadlineDate.getDate() + hiringDeadlineDays)
+
+        // Calculate Round Schedule
+        const pipelineRounds = data.hiringPipeline || []
+        const roundSchedule: { roundName: string, date: Date }[] = []
+        
+        if (pipelineRounds.length > 0) {
+            const selectionWindow = hiringDeadlineDays - applicationCloseDays
+            const daysPerRound = Math.max(1, Math.floor(selectionWindow / pipelineRounds.length))
+            
+            pipelineRounds.forEach((round: any, index: number) => {
+                const roundDate = new Date(applicationCloseDate)
+                roundDate.setDate(roundDate.getDate() + (daysPerRound * (index + 1)))
+                roundSchedule.push({
+                    roundName: round.roundName,
+                    date: roundDate
+                })
+            })
+        }
 
         // Derive some simple search tags based on title/department to fill out the UI
         const tags = [data.department, data.locationType, data.type].filter(Boolean)
@@ -30,8 +59,12 @@ export async function createJob(data: any) {
             tags: tags,
             atsKeywords: data.atsKeywords || [],
             atsCriteriaScore: data.atsCriteriaScore || 75,
-            deadline: data.deadline,
-            hiringPipeline: data.hiringPipeline || [],
+            applicationCloseDays,
+            hiringDeadlineDays,
+            applicationCloseDate,
+            deadline: deadlineDate,
+            hiringPipeline: pipelineRounds,
+            roundSchedule,
             status: "Active"
         })
 
@@ -195,9 +228,16 @@ export async function applyToJob(data: any) {
         await connectToDatabase()
 
         const job = await Job.findById(data.jobId).lean();
+        if (!job) return { success: false, error: "Job not found" }
+
+        // Check if application window is closed
+        if (job.applicationCloseDate && new Date() > new Date(job.applicationCloseDate)) {
+            return { success: false, error: "Applications for this job are now closed." }
+        }
         
         let calculatedScore = Math.floor(Math.random() * 20) + 60; // fallback mock
         let initialStatus = "Applied";
+        let rejectionReason = "";
 
         // Perform ATS Parsing
         if (data.resumeUrl && job && job.atsKeywords && job.atsKeywords.length > 0) {
@@ -211,7 +251,6 @@ export async function applyToJob(data: any) {
 
                 let matches = 0;
                 for (const word of job.atsKeywords) {
-                    // Use word boundaries so that 'js' doesn't fire positively inside 'json'
                     const safeWord = word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     const wordBoundaryRegex = new RegExp(`\\b${safeWord}\\b`, 'i');
                     
@@ -220,7 +259,6 @@ export async function applyToJob(data: any) {
                     }
                 }
                 
-                // Map matched percentage to a 50-100 range score
                 const matchPercentage = matches / job.atsKeywords.length;
                 calculatedScore = Math.floor(50 + (matchPercentage * 50));
             } catch (error) {
@@ -228,8 +266,13 @@ export async function applyToJob(data: any) {
             }
         }
 
-        if (job && typeof job.atsCriteriaScore === 'number' && calculatedScore >= job.atsCriteriaScore) {
-            initialStatus = "Shortlisted";
+        if (job && typeof job.atsCriteriaScore === 'number') {
+            if (calculatedScore >= job.atsCriteriaScore) {
+                initialStatus = "Shortlisted";
+            } else {
+                initialStatus = "Rejected";
+                rejectionReason = `Resume score (${calculatedScore}%) is below the required criteria (${job.atsCriteriaScore}%). Priority keywords were missing or insufficient.`;
+            }
         }
 
         const newApp = new Application({
@@ -251,35 +294,72 @@ export async function applyToJob(data: any) {
             qualifications: data.qualifications,
             gender: data.gender,
             resumeScore: calculatedScore,
-            status: initialStatus
+            status: initialStatus,
+            rejectionReason: rejectionReason
         })
         await newApp.save()
 
         // Increment candidate tracker
         await Job.findByIdAndUpdate(data.jobId, { $inc: { candidatesCount: 1 } })
 
-        // Notify the candidate
-        await Notification.create({
-            recipientEmail: data.email,
-            type: 'APPLICATION_RECEIVED',
-            message: `You have successfully applied for the job.`,
-            relatedJobId: data.jobId,
-            relatedApplicationId: newApp._id.toString()
-        });
+        // AUTOMATED NOTIFICATIONS (SIMULATED MAIL)
+        if (initialStatus === "Shortlisted") {
+            await Notification.create({
+                recipientEmail: data.email,
+                type: 'SHORTLISTED',
+                message: `Dear ${data.firstName}, congratulations! Your profile has been automatically shortlisted for the '${job.title}' role. Our system identified a great match with your skills. Please visit your dashboard to see your next steps and schedule.`,
+                relatedJobId: data.jobId,
+                relatedApplicationId: newApp._id.toString()
+            });
+        } else if (initialStatus === "Rejected") {
+            await Notification.create({
+                recipientEmail: data.email,
+                type: 'REJECTION',
+                message: `Dear ${data.firstName}, thank you for applying for '${job.title}'. After reviewing your application against our criteria, we regret to inform you that you have not been shortlisted at this time. We wish you the best in your career.`,
+                relatedJobId: data.jobId,
+                relatedApplicationId: newApp._id.toString()
+            });
+        } else {
+            await Notification.create({
+                recipientEmail: data.email,
+                type: 'APPLICATION_RECEIVED',
+                message: `Dear ${data.firstName}, thank you for your interest in Recruit Sphere! We have received your application for the '${job.title}' role. Our team will review your profile and get back to you shortly.`,
+                relatedJobId: data.jobId,
+                relatedApplicationId: newApp._id.toString()
+            });
+        }
 
         // Notify all recruiters
         const recruiters = await User.find({ role: 'recruiter' }, { email: 1 }).lean();
-        const jobName = await Job.findById(data.jobId, { title: 1 }).lean();
         const recruiterNotifs = recruiters.map(r => ({
             recipientEmail: r.email,
             type: 'APPLICATION_RECEIVED',
-            message: `${newApp.firstName} ${newApp.lastName} applied for '${jobName?.title || 'a job'}'.`,
+            message: `${newApp.firstName} ${newApp.lastName} applied for '${job.title}'. Status: ${initialStatus}.`,
             relatedJobId: data.jobId,
             relatedApplicationId: newApp._id.toString()
         }));
-        if (recruiterNotifs.length > 0) {
-            await Notification.insertMany(recruiterNotifs);
-        }
+        // REAL EMAIL NOTIFICATION (SMTP)
+        const emailHtml = getRecruitmentEmailTemplate({
+            candidateName: data.firstName,
+            role: job.title,
+            status: initialStatus,
+            reason: initialStatus === 'Rejected' ? rejectionReason : undefined,
+            message: initialStatus === 'Shortlisted' 
+                ? `Wonderful news! Your profile has been automatically shortlisted for the '${job.title}' role. Our system identified a great match with your skills. Please check your dashboard for next steps.`
+                : initialStatus === 'Rejected'
+                ? `Thank you for your interest in '${job.title}'. Unfortunately, you have not been shortlisted at this time. We wish you the best in your career pursuits.`
+                : `Thank you for your interest in our '${job.title}' position. We have received your application and our team will review your profile shortly.`
+        });
+
+        await sendEmail({
+            to: data.email,
+            subject: initialStatus === 'Shortlisted' 
+                ? `Great News! You've been Shortlisted at Recruit Sphere` 
+                : initialStatus === 'Rejected'
+                ? `Update regarding your application at Recruit Sphere`
+                : `Application Received: ${job.title}`,
+            html: emailHtml
+        });
 
         revalidatePath('/jobs')
         revalidatePath('/candidate/jobs')
@@ -362,8 +442,10 @@ export async function getCandidateApplications(candidateId: string) {
                     role: job?.title || "Unknown Role",
                     company: job?.company === "Acme Corp" ? "Recruit Sphere" : (job?.company || "Recruit Sphere"),
                     location: job?.location || "Unknown Location",
+                    candidateName: `${app.firstName} ${app.lastName}`,
                     appliedDate: app.createdAt ? formatDistanceToNow(new Date(app.createdAt), { addSuffix: true }) : "recently",
                     status: app.status || "Applied",
+                    rejectionReason: app.rejectionReason || "",
                     resumeScore: typeof app.resumeScore === 'number' ? app.resumeScore : Math.floor(60 + (parseInt(app._id.toString().slice(-6), 16) % 30)),
                     pipeline: ["Applied", "Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"],
                     currentStageIndex: app.status === "Applied" ? 0 : 
@@ -389,12 +471,51 @@ export async function updateApplicationStatus(id: string, status: string) {
         const app = await Application.findByIdAndUpdate(id, { status })
         if (app) {
             const job = await Job.findById(app.jobId).lean()
-            await Notification.create({
-                recipientEmail: app.email,
-                type: 'STATUS_UPDATE',
-                message: `Your application for '${job?.title || 'the job'}' has been updated to: ${status}.`,
-                relatedJobId: app.jobId.toString(),
-                relatedApplicationId: app._id.toString(),
+            let message = ""
+            let type = 'STATUS_UPDATE'
+
+            switch(status) {
+                case 'Shortlisted':
+                    type = 'SHORTLISTED'
+                    message = `Congratulations ${app.firstName}! You have been shortlisted for the '${job?.title}' position at Recruit Sphere. Please check your dashboard to view the upcoming round schedule.`
+                    break;
+                case 'Coding Round':
+                    message = `Dear ${app.firstName}, you have been invited to the Coding Round for '${job?.title}'. Please log in to the platform to start your assessment at the scheduled time.`
+                    break;
+                case 'Apptitude Round':
+                    message = `Dear ${app.firstName}, your application for '${job?.title}' has moved to the Aptitude Round. Get ready for the next stage!`
+                    break;
+                case 'AI Interview Round':
+                    message = `Hello ${app.firstName}, you have been selected for the AI Interview Round for '${job?.title}'. This automated session will evaluate your technical and soft skills.`
+                    break;
+                case 'Interview Round':
+                    message = `Great news ${app.firstName}! You have been scheduled for a Technical Interview for the '${job?.title}' role. A calendar invite will follow shortly.`
+                    break;
+                case 'Hire':
+                case 'Offer':
+                    type = 'OFFER_EXTENDED'
+                    message = `Fantastic news ${app.firstName}! We are pleased to extend an offer for the '${job?.title}' position. Welcome to the team!`
+                    break;
+                case 'Rejected':
+                    type = 'REJECTION'
+                    message = `Dear ${app.firstName}, thank you for your interest in the '${job?.title}' role. Unfortunately, you have not been shortlisted for this position at this time. We wish you the best of luck.`
+                    break;
+                default:
+                    message = `Your application status for '${job?.title}' has been updated to: ${status}.`
+            }
+
+            // REAL EMAIL NOTIFICATION (SMTP)
+            const emailHtml = getRecruitmentEmailTemplate({
+                candidateName: app.firstName,
+                role: job?.title || "Position",
+                status: status,
+                message: message
+            });
+
+            await sendEmail({
+                to: app.email,
+                subject: `Application Update: ${status} for ${job?.title || 'the job'}`,
+                html: emailHtml
             });
         }
         revalidatePath('/candidates')
@@ -420,6 +541,24 @@ export async function withdrawApplication(id: string) {
         return { success: false, error: "Application not found" }
     } catch (error: any) {
         console.error("Failed to withdraw application:", error)
+        return { success: false, error: error.message }
+    }
+}
+export async function hasUserAppliedToJob(jobId: string, candidateId: string) {
+    try {
+        await connectToDatabase()
+        const app = await Application.findOne({ jobId, candidateId }).lean()
+        if (app) {
+            return { 
+                success: true, 
+                hasApplied: true, 
+                status: (app as any).status, 
+                rejectionReason: (app as any).rejectionReason,
+                appliedAt: (app as any).createdAt
+            }
+        }
+        return { success: true, hasApplied: false }
+    } catch (error: any) {
         return { success: false, error: error.message }
     }
 }

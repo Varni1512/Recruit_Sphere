@@ -1,6 +1,6 @@
 "use client"
 
-import { Building2, Calendar, FileText, MapPin, MoreHorizontal } from "lucide-react"
+import { AlertCircle, Building2, Calendar, FileText, MapPin, MoreHorizontal, XCircle } from "lucide-react"
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
@@ -131,6 +131,44 @@ export default function CandidateApplicationsPage() {
                                                 Resume Score
                                             </div>
                                         </div>
+
+                                        {app.status === 'Rejected' && (
+                                            <div className="mt-6 p-4 rounded-xl bg-destructive/5 border border-destructive/10 relative overflow-hidden group/feedback transition-all hover:bg-destructive/[0.08]">
+                                                <div className="absolute top-0 right-0 p-3 opacity-20 group-hover/feedback:opacity-40 transition-opacity">
+                                                    <XCircle className="h-10 w-10 text-destructive" />
+                                                </div>
+                                                <div className="relative z-10">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <AlertCircle className="h-4 w-4 text-destructive" />
+                                                        <h4 className="text-xs font-bold text-destructive uppercase tracking-widest">Application Status: Not Selected</h4>
+                                                    </div>
+                                                        <div className="flex flex-col gap-3">
+                                                            <div className="flex items-center justify-between border-b border-destructive/10 pb-2">
+                                                                <p className="text-sm font-bold text-foreground italic">Dear {app.candidateName},</p>
+                                                                {/* <Badge variant="outline" className="text-[9px] uppercase border-destructive/20 text-destructive bg-destructive/5">Official Notice</Badge> */}
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                                                    {app.rejectionReason ? (
+                                                                        <>
+                                                                            Thank you for applying to Recruit Sphere. We regret to inform you that you have not been shortlisted for the role of <strong>{app.role}</strong> because: 
+                                                                            <span className="block mt-2 p-2 bg-destructive/10 rounded border-l-4 border-destructive text-destructive font-semibold">
+                                                                                {app.rejectionReason}
+                                                                            </span>
+                                                                        </>
+                                                                    ) : (
+                                                                        "Thank you for your application. After careful evaluation of your profile against our current requirements, we have decided not to move forward with your candidacy at this time."
+                                                                    )}
+                                                                </p>
+                                                                <div className="pt-2 flex items-center justify-between opacity-70">
+                                                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">Processed by Recruit Sphere ATS</p>
+                                                                    <p className="text-[10px] text-muted-foreground font-medium italic">Decision Final</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                        )}
                                     </div>
 
                                     {/* Right Actions / Pipeline Space */}

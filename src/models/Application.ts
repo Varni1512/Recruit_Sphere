@@ -20,6 +20,7 @@ export interface IApplication extends Document {
     gender: string;
     resumeScore: number;
     status: string; // "Pending", "Reviewed", "Rejected", "Accepted"
+    rejectionReason?: string;
     createdAt: Date;
 }
 
@@ -43,6 +44,7 @@ const ApplicationSchema: Schema = new Schema({
     gender: { type: String, required: true },
     resumeScore: { type: Number, default: 0 },
     status: { type: String, default: "Applied", enum: ["Applied", "Pending", "Reviewed", "Rejected", "Accepted", "Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"] },
+    rejectionReason: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now }
 });
 

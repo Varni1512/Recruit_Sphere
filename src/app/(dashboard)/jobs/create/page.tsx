@@ -52,7 +52,8 @@ export default function CreateJobPage() {
     const [experience, setExperience] = useState("")
     const [salary, setSalary] = useState("")
     const [description, setDescription] = useState("")
-    const [daysToHire, setDaysToHire] = useState<number>(30)
+    const [applicationCloseDays, setApplicationCloseDays] = useState<number>(3)
+    const [hiringDeadlineDays, setHiringDeadlineDays] = useState<number>(15)
     const [isSaving, setIsSaving] = useState(false)
     const [showATSModal, setShowATSModal] = useState(false)
     const [atsKeywords, setAtsKeywords] = useState<string[]>([])
@@ -96,9 +97,6 @@ export default function CreateJobPage() {
     const handleSave = async () => {
         setIsSaving(true)
         try {
-            const deadlineDate = new Date()
-            deadlineDate.setDate(deadlineDate.getDate() + daysToHire)
-
             const selectedRounds = pipelineRounds
                 .filter(r => r.selected)
                 .map(r => ({
@@ -118,7 +116,8 @@ export default function CreateJobPage() {
                 description,
                 atsKeywords,
                 atsCriteriaScore,
-                deadline: deadlineDate,
+                applicationCloseDays,
+                hiringDeadlineDays,
                 hiringPipeline: selectedRounds
             })
 
@@ -237,10 +236,17 @@ export default function CreateJobPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="days-to-hire">Time to Hire (Days)</Label>
+                            <Label htmlFor="app-days">Application Window (Days)</Label>
                             <div className="flex items-center gap-2">
-                                <Input id="days-to-hire" type="number" value={daysToHire} onChange={(e) => setDaysToHire(Number(e.target.value))} />
-                                <span className="text-sm text-muted-foreground whitespace-nowrap">days from today</span>
+                                <Input id="app-days" type="number" value={applicationCloseDays} onChange={(e) => setApplicationCloseDays(Number(e.target.value))} />
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">days to apply</span>
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="hiring-days">Hiring Window (Days)</Label>
+                            <div className="flex items-center gap-2">
+                                <Input id="hiring-days" type="number" value={hiringDeadlineDays} onChange={(e) => setHiringDeadlineDays(Number(e.target.value))} />
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">total days to hire</span>
                             </div>
                         </div>
                     </div>

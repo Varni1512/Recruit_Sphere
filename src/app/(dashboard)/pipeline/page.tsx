@@ -11,6 +11,7 @@ export default async function PipelinePage() {
         role: app.role,
         score: app.score,
         status: app.status,
+        photoUrl: app.photoUrl,
     }))
 
     return (

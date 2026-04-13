@@ -48,32 +48,40 @@ export function KanbanCard({ candidate, isOverlay }: KanbanCardProps) {
         <div
             ref={setNodeRef}
             style={style}
-            className={`${isOverlay ? "cursor-grabbing rotate-2 shadow-xl" : "cursor-grab"}`}
+            className={`${isOverlay ? "cursor-grabbing rotate-3 scale-105 shadow-2xl z-50" : "cursor-grab"}`}
         >
-            <Card className="hover:ring-1 hover:ring-primary/50 transition-all bg-background/95 backdrop-blur shadow-sm">
+            <Card className="group relative overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/20 bg-card border-border/50">
+                <div className="absolute top-0 left-0 w-1 h-full bg-primary/0 group-hover:bg-primary/40 transition-all duration-200" />
                 <CardContent className="p-4 flex flex-col gap-3">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={`https://avatar.vercel.sh/${candidate.id}.png`} alt={candidate.name} />
-                                <AvatarFallback>{candidate.name.charAt(0)}</AvatarFallback>
+                            <Avatar className="h-9 w-9 border border-border/50">
+                                {candidate.photoUrl && <AvatarImage src={candidate.photoUrl} alt={candidate.name} />}
+                                <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">{candidate.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <div className="flex flex-col">
-                                <span className="font-semibold text-sm leading-none">{candidate.name}</span>
-                                <span className="text-xs text-muted-foreground mt-1">{candidate.role}</span>
+                            <div className="flex flex-col min-w-0">
+                                <h4 className="font-semibold text-[13px] leading-tight text-foreground truncate">{candidate.name}</h4>
+                                <p className="text-[11px] text-muted-foreground/80 mt-0.5 truncate">{candidate.role}</p>
                             </div>
                         </div>
                         <div
                             {...attributes}
                             {...listeners}
-                            className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing p-1 -mr-2"
+                            className="text-muted-foreground/40 hover:text-primary transition-colors cursor-grab active:cursor-grabbing p-1 -mr-1"
                         >
-                            <GripVertical className="h-4 w-4" />
+                            <GripVertical className="h-3.5 w-3.5" />
                         </div>
                     </div>
-                    <div className="flex items-center gap-1 bg-muted/50 w-fit px-2 py-0.5 rounded-full mt-2">
-                        <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                        <span className="text-xs font-medium">{candidate.score}</span>
+                    
+                    <div className="flex items-center justify-between mt-1">
+                        <div className="flex items-center gap-1.5 bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">
+                            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                            <span className="text-[10px] font-bold text-primary/80">{candidate.score}</span>
+                        </div>
+                        
+                        <div className="text-[10px] font-medium text-muted-foreground/60 italic">
+                            {candidate.status}
+                        </div>
                     </div>
                 </CardContent>
             </Card>

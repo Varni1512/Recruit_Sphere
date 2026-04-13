@@ -1,6 +1,6 @@
 "use client"
 
-import { Building2, Save, ArrowLeft } from "lucide-react"
+import { Building2, Save, ArrowLeft, X, GripVertical, Star, Calendar } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -15,7 +15,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 
 import dynamic from 'next/dynamic'
 
@@ -51,11 +52,29 @@ export default function CreateJobPage() {
     const [experience, setExperience] = useState("")
     const [salary, setSalary] = useState("")
     const [description, setDescription] = useState("")
+    const [daysToHire, setDaysToHire] = useState<number>(30)
     const [isSaving, setIsSaving] = useState(false)
     const [showATSModal, setShowATSModal] = useState(false)
     const [atsKeywords, setAtsKeywords] = useState<string[]>([])
     const [newKeyword, setNewKeyword] = useState("")
     const [atsCriteriaScore, setAtsCriteriaScore] = useState<number>(75)
+
+    const [pipelineRounds, setPipelineRounds] = useState([
+        { id: "aptitude", name: "Aptitude", selected: false, totalScore: 100, passingScore: 70 },
+        { id: "coding", name: "Coding", selected: false, totalScore: 100, passingScore: 70 },
+        { id: "coding2", name: "Coding 2", selected: false, totalScore: 100, passingScore: 70 },
+        { id: "ai_interview", name: "AI Interview", selected: false, totalScore: 100, passingScore: 70 },
+        { id: "tech_interview", name: "Technical Interview", selected: false, totalScore: 100, passingScore: 70 },
+        { id: "final_interview", name: "Final Interview", selected: false, totalScore: 100, passingScore: 70 },
+    ])
+
+    const toggleRound = (id: string) => {
+        setPipelineRounds(prev => prev.map(r => r.id === id ? { ...r, selected: !r.selected } : r))
+    }
+
+    const updateRoundScore = (id: string, field: 'totalScore' | 'passingScore', value: number) => {
+        setPipelineRounds(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r))
+    }
 
     const addKeyword = () => {
         if (newKeyword.trim() && !atsKeywords.includes(newKeyword.trim())) {
@@ -75,13 +94,19 @@ export default function CreateJobPage() {
     }
 
     const handleSave = async () => {
-        if (!title || !department || !type || !locationType || !location || !experience || !salary) {
-            alert("Please fill in all required fields.")
-            return
-        }
-
         setIsSaving(true)
         try {
+            const deadlineDate = new Date()
+            deadlineDate.setDate(deadlineDate.getDate() + daysToHire)
+
+            const selectedRounds = pipelineRounds
+                .filter(r => r.selected)
+                .map(r => ({
+                    roundName: r.name,
+                    totalScore: r.totalScore,
+                    passingScore: r.passingScore
+                }))
+
             const result = await createJob({
                 title,
                 department,
@@ -92,7 +117,9 @@ export default function CreateJobPage() {
                 salary,
                 description,
                 atsKeywords,
-                atsCriteriaScore
+                atsCriteriaScore,
+                deadline: deadlineDate,
+                hiringPipeline: selectedRounds
             })
 
             if (result.success) {
@@ -208,6 +235,65 @@ export default function CreateJobPage() {
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="days-to-hire">Time to Hire (Days)</Label>
+                            <div className="flex items-center gap-2">
+                                <Input id="days-to-hire" type="number" value={daysToHire} onChange={(e) => setDaysToHire(Number(e.target.value))} />
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">days from today</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <Separator className="my-2" />
+
+                    <div className="grid gap-4">
+                        <div className="flex flex-col gap-1">
+                            <Label className="text-lg font-bold">Hiring Pipeline</Label>
+                            <p className="text-sm text-muted-foreground">Select the rounds for this job and set the qualifying scores.</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {pipelineRounds.map((round) => (
+                                <div key={round.id} className={`p-4 rounded-xl border transition-all ${round.selected ? 'bg-primary/5 border-primary/20 shadow-sm' : 'bg-muted/10 border-border/50'}`}>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <Checkbox 
+                                                id={`round-${round.id}`} 
+                                                checked={round.selected} 
+                                                onCheckedChange={() => toggleRound(round.id)}
+                                            />
+                                            <Label htmlFor={`round-${round.id}`} className="font-semibold cursor-pointer">{round.name}</Label>
+                                        </div>
+                                    </div>
+                                    
+                                    {round.selected && (
+                                        <div className="grid grid-cols-2 gap-3 mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <div className="grid gap-1.5">
+                                                <Label className="text-xs text-muted-foreground">Total Score</Label>
+                                                <Input 
+                                                    type="number" 
+                                                    className="h-8 text-sm"
+                                                    value={round.totalScore} 
+                                                    onChange={(e) => updateRoundScore(round.id, 'totalScore', Number(e.target.value))} 
+                                                />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <Label className="text-xs text-muted-foreground">Passing Score</Label>
+                                                <Input 
+                                                    type="number" 
+                                                    className="h-8 text-sm text-primary font-medium"
+                                                    value={round.passingScore} 
+                                                    onChange={(e) => updateRoundScore(round.id, 'passingScore', Number(e.target.value))} 
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     <Separator className="my-4" />
 
                     <div className="grid gap-2">
@@ -301,4 +387,3 @@ export default function CreateJobPage() {
         </div>
     )
 }
-

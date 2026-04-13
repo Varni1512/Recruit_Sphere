@@ -30,6 +30,7 @@ export type Candidate = {
     role: string
     score: number
     status: string
+    photoUrl?: string
 }
 
 export type Column = {
@@ -82,7 +83,7 @@ export function KanbanBoard({ initialCandidates }: KanbanBoardProps) {
                 {columns.map((col) => {
                     const columnCandidates = candidates.filter((c) => c.status === col.id)
                     return (
-                        <KanbanColumn key={col.id} column={col}>
+                        <KanbanColumn key={col.id} column={col} count={columnCandidates.length}>
                             <SortableContext
                                 id={col.id}
                                 items={columnCandidates.map((c) => c.id)}
@@ -146,26 +147,51 @@ export function KanbanBoard({ initialCandidates }: KanbanBoardProps) {
         if (isActiveCandidate && isOverColumn) {
             setCandidates((candidates) => {
                 const activeIndex = candidates.findIndex((c) => c.id === activeId)
-                const newCandidates = [...candidates]
-                newCandidates[activeIndex].status = overId as string
-                return arrayMove(newCandidates, activeIndex, activeIndex) // just update status
+                if (candidates[activeIndex].status !== overId) {
+                    const newCandidates = [...candidates]
+                    newCandidates[activeIndex].status = overId as string
+                    return arrayMove(newCandidates, activeIndex, activeIndex)
+                }
+                return candidates
             })
-            // Persist to DB asynchronously
-            updateApplicationStatus(activeId as string, overId as string).catch(console.error)
         }
     }
 
-    function handleDragEnd(event: DragEndEvent) {
+    async function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event
-        const activeId = active.id
-        
-        // Record initial status to check if saving is needed
-        const previousStatus = candidates.find(c => c.id === activeId)?.status
-
         setActiveId(null)
+
         if (!over) return
 
+        const activeId = active.id
         const overId = over.id
+
+        const activeCandidate = candidates.find((c) => c.id === activeId)
+        if (!activeCandidate) return
+
+        // Finalize state and update DB
+        const isOverColumn = over.data.current?.type === "Column"
+        const isOverCandidate = over.data.current?.type === "Candidate"
+
+        let targetStatus = activeCandidate.status
+
+        if (isOverColumn) {
+            targetStatus = overId as string
+        } else if (isOverCandidate) {
+            const overCandidate = candidates.find((c) => c.id === overId)
+            if (overCandidate) {
+                targetStatus = overCandidate.status
+            }
+        }
+
+        // Only update if status changed or if it's a reorder within the same column (DB doesn't track order yet, but we update status)
+        // We always trigger the update to ensure DB is in sync with the last dropped position's status
+        try {
+            await updateApplicationStatus(activeId as string, targetStatus)
+        } catch (error) {
+            console.error("Failed to update status:", error)
+            // Optionally revert local state if DB update fails
+        }
 
         if (activeId === overId) return
 
@@ -173,22 +199,10 @@ export function KanbanBoard({ initialCandidates }: KanbanBoardProps) {
             const activeIndex = candidates.findIndex((c) => c.id === activeId)
             const overIndex = candidates.findIndex((c) => c.id === overId)
 
-            if (overIndex !== -1 && candidates[activeIndex].status === candidates[overIndex].status) {
-                // Determine if status actually changed to persist DB (rare here, handled in handleDragOver, but just in case)
+            if (overIndex !== -1) {
                 return arrayMove(candidates, activeIndex, overIndex)
             }
             return candidates
-        })
-        
-        // Final drag end handler: if it was dropped on another candidate, handleDragOver already updated the UI state.
-        // We ensure DB matches by pushing the active candidate's new status. 
-        // We find the active candidate in the new candidates list reliably.
-        setCandidates((currentCandidates) => {
-            const currentActive = currentCandidates.find((c) => c.id === activeId)
-            if (currentActive && previousStatus !== currentActive.status) {
-                updateApplicationStatus(currentActive.id, currentActive.status).catch(console.error)
-            }
-            return currentCandidates
         })
     }
 }

@@ -30,6 +30,8 @@ export async function createJob(data: any) {
             tags: tags,
             atsKeywords: data.atsKeywords || [],
             atsCriteriaScore: data.atsCriteriaScore || 75,
+            deadline: data.deadline,
+            hiringPipeline: data.hiringPipeline || [],
             status: "Active"
         })
 
@@ -301,6 +303,13 @@ export async function getAllApplications() {
             return acc;
         }, {} as Record<string, string>);
 
+        // Fetch corresponding users (candidates) to get their photoUrl
+        const users = await User.find({ _id: { $in: apps.map(a => a.candidateId) } }).lean()
+        const userMap = users.reduce((acc, user) => {
+            acc[user._id.toString()] = user.photoUrl;
+            return acc;
+        }, {} as Record<string, string | undefined>);
+
         return {
             success: true,
             applications: apps.map((app: any) => ({
@@ -308,6 +317,7 @@ export async function getAllApplications() {
                  jobId: app.jobId.toString(),
                  role: jobMap[app.jobId] || "Unknown Role",
                  name: `${app.firstName} ${app.lastName}`,
+                 photoUrl: userMap[app.candidateId.toString()] || null,
                  email: app.email,
                  mobile: app.mobile,
                  location: app.address || "Unknown",

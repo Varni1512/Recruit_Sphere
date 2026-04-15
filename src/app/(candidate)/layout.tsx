@@ -1,5 +1,6 @@
 import { AppCandidateSidebar } from "@/components/candidate/sidebar"
 import { CandidateHeader } from "@/components/candidate/header"
+import { AuthProviderSync } from "@/components/auth/AuthProviderSync"
 
 export default function CandidateLayout({
     children,
@@ -8,6 +9,7 @@ export default function CandidateLayout({
 }) {
     return (
         <div className="flex h-screen w-full overflow-hidden bg-muted/40 text-foreground transition-colors duration-300">
+            <AuthProviderSync />
             <AppCandidateSidebar />
             <div className="flex flex-col flex-1 overflow-hidden relative">
                 <CandidateHeader />

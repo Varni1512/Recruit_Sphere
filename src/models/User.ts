@@ -75,7 +75,11 @@ const UserSchema: Schema = new Schema({
     },
     resetPasswordOTP: String,
     resetPasswordExpires: Date,
-});
+}, { timestamps: true });
+
+// Performance & Scalability Indexes
+UserSchema.index({ email: 1 }, { unique: true }); // Fast login
+UserSchema.index({ role: 1 }); // Fast candidate/recruiter list filtering
 
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
 

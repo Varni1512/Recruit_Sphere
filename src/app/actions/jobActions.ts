@@ -9,112 +9,34 @@ import { revalidatePath } from "next/cache"
 import { formatDistanceToNow } from "date-fns"
 import { sendEmail } from "@/lib/email"
 import { getRecruitmentEmailTemplate } from "@/lib/emailTemplates"
+import { JobService } from "@/services/jobService"
+import { createJobSchema } from "@/shared/schemas/jobSchema"
 
 const capitalize = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
 export async function createJob(data: any) {
     try {
-        await connectToDatabase()
-
-        const applicationCloseDays = Number(data.applicationCloseDays) || 7
-        const hiringDeadlineDays = Number(data.hiringDeadlineDays) || 30
-        
-        const applicationCloseDate = new Date()
-        applicationCloseDate.setDate(applicationCloseDate.getDate() + applicationCloseDays)
-        
-        const deadlineDate = new Date()
-        deadlineDate.setDate(deadlineDate.getDate() + hiringDeadlineDays)
-
-        // Calculate Round Schedule
-        const pipelineRounds = data.hiringPipeline || []
-        const roundSchedule: { roundName: string, date: Date }[] = []
-        
-        if (pipelineRounds.length > 0) {
-            const selectionWindow = hiringDeadlineDays - applicationCloseDays
-            const daysPerRound = Math.max(1, Math.floor(selectionWindow / pipelineRounds.length))
-            
-            pipelineRounds.forEach((round: any, index: number) => {
-                const roundDate = new Date(applicationCloseDate)
-                roundDate.setDate(roundDate.getDate() + (daysPerRound * (index + 1)))
-                roundSchedule.push({
-                    roundName: round.roundName,
-                    date: roundDate
-                })
-            })
-        }
-
-        // Derive some simple search tags based on title/department to fill out the UI
-        const tags = [data.department, data.locationType, data.type].filter(Boolean)
-
-        const newJob = new Job({
-            title: data.title,
-            department: data.department,
-            type: data.type,
-            locationType: data.locationType,
-            location: data.location,
-            description: data.description,
-            company: data.company || "Recruit Sphere",
-            salary: data.salary || "Competitive",
-            experience: data.experience || "Mid-Level",
-            tags: tags,
-            atsKeywords: data.atsKeywords || [],
-            atsCriteriaScore: data.atsCriteriaScore || 75,
-            applicationCloseDays,
-            hiringDeadlineDays,
-            applicationCloseDate,
-            deadline: deadlineDate,
-            hiringPipeline: pipelineRounds,
-            roundSchedule,
-            status: "Active"
-        })
-
-        await newJob.save()
-
-        // Notify all candidates about the new job
-        const candidates = await User.find({ role: 'candidate' }, { email: 1 }).lean();
-        const notifications = candidates.map(c => ({
-            recipientEmail: c.email,
-            type: 'JOB_POSTED',
-            message: `A new job '${newJob.title}' has been posted by ${newJob.company}.`,
-            relatedJobId: newJob._id.toString()
-        }));
-        if (notifications.length > 0) {
-            await Notification.insertMany(notifications);
-        }
-
-        // Notify all recruiters about the new job post
-        const recruiters = await User.find({ role: 'recruiter' }, { email: 1 }).lean();
-        const recruiterNotifs = recruiters.map(r => ({
-            recipientEmail: r.email,
-            type: 'JOB_POSTED',
-            message: `Job '${newJob.title}' was successfully posted.`,
-            relatedJobId: newJob._id.toString()
-        }));
-        if (recruiterNotifs.length > 0) {
-            await Notification.insertMany(recruiterNotifs);
-        }
+        const validatedData = createJobSchema.parse(data)
+        const newJob = await JobService.createJob(validatedData)
 
         // Tell Next.js to immediately purge the cache for the jobs pages so queries refresh in realtime
         revalidatePath('/jobs')
         revalidatePath('/candidate/jobs')
         
-        return { success: true, jobId: newJob._id.toString() }
+        return { success: true, jobId: (newJob as any)._id.toString() }
     } catch (error: any) {
         console.error("Failed to create job:", error)
-        return { success: false, error: error.message }
+        return { success: false, error: error.message || "An unexpected error occurred" }
     }
 }
 
 export async function getAllJobs(filterStatus?: string) {
     try {
-        await connectToDatabase()
-        
         const query = filterStatus && filterStatus !== "all" 
             ? { status: filterStatus } 
             : {}
             
-        // Return latest first
-        const jobs = await Job.find(query).sort({ createdAt: -1 }).lean()
+        const jobs = await JobService.getJobs(query)
 
         // Format for standard UI ingestion (dates, strings)
         return { 
@@ -145,8 +67,7 @@ export async function getAllJobs(filterStatus?: string) {
 
 export async function getJobById(id: string) {
     try {
-        await connectToDatabase()
-        const job = await Job.findById(id).lean()
+        const job = await JobService.getJobById(id)
         if (!job) return { success: false, error: "Job not found" }
 
         return { 
@@ -432,10 +353,11 @@ export async function getCandidateApplications(candidateId: string) {
             return acc;
         }, {} as Record<string, any>);
 
-        return {
+        const result = {
             success: true,
             applications: apps.map((app: any) => {
-                const job = jobMap[app.jobId];
+                const jobIdStr = app.jobId.toString();
+                const job = jobMap[jobIdStr];
                 return {
                     id: app._id.toString(),
                     jobId: app.jobId.toString(),
@@ -459,6 +381,8 @@ export async function getCandidateApplications(candidateId: string) {
                 }
             })
         }
+
+        return JSON.parse(JSON.stringify(result))
     } catch (error: any) {
         console.error("Failed to fetch candidate applications:", error)
         return { success: false, error: error.message, applications: [] }

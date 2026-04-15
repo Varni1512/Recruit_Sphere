@@ -9,11 +9,17 @@ export async function getDashboardStats() {
     try {
         await connectToDatabase()
 
-        const totalJobs = await Job.countDocuments({})
-        const totalCandidates = await User.countDocuments({ role: 'candidate' })
-        
-        const interviewsScheduled = await Application.countDocuments({ status: { $in: ['Interview', 'Interviewing'] } })
-        const offersAccepted = await Application.countDocuments({ status: { $in: ['Offer', 'Hired'] } })
+        const [
+            totalJobs,
+            totalCandidates,
+            interviewsScheduled,
+            offersAccepted
+        ] = await Promise.all([
+            Job.countDocuments({}),
+            User.countDocuments({ role: 'candidate' }),
+            Application.countDocuments({ status: { $in: ['Interview', 'Interviewing', 'Interview Round'] } }),
+            Application.countDocuments({ status: { $in: ['Offer', 'Hired', 'Hire'] } })
+        ])
 
         // Get recent applications (limit 5)
         const recentAppsRaw = await Application.find()

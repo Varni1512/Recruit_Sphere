@@ -46,7 +46,14 @@ const ApplicationSchema: Schema = new Schema({
     status: { type: String, default: "Applied", enum: ["Applied", "Pending", "Reviewed", "Rejected", "Accepted", "Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"] },
     rejectionReason: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
+
+// Performance Tuning: Indexes for fast filtering and ranking
+ApplicationSchema.index({ jobId: 1 });
+ApplicationSchema.index({ candidateId: 1 });
+ApplicationSchema.index({ status: 1 });
+ApplicationSchema.index({ createdAt: -1 });
+ApplicationSchema.index({ resumeScore: -1 }); // Fast sorting of top candidates
 
 const Application: Model<IApplication> = mongoose.models.Application || mongoose.model<IApplication>("Application", ApplicationSchema);
 

@@ -62,7 +62,13 @@ const JobSchema: Schema = new Schema({
     }],
     createdAt: { type: Date, default: Date.now },
     recruiterId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false }
-});
+}, { timestamps: true });
+
+// Industry Best Practice: Adding indexes for high-frequency queries
+JobSchema.index({ recruiterId: 1 });
+JobSchema.index({ status: 1 });
+JobSchema.index({ createdAt: -1 }); // Optimized for "Latest first" sorting
+JobSchema.index({ department: 1 });
 
 const Job: Model<IJob> = mongoose.models.Job || mongoose.model<IJob>("Job", JobSchema);
 

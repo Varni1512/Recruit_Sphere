@@ -59,9 +59,10 @@ graph TD
         NS --> M
     end
 
-    style JS fill:#f9f,stroke:#333,stroke-width:2px
-    style US fill:#f9f,stroke:#333,stroke-width:2px
-    style AS fill:#f9f,stroke:#333,stroke-width:2px
+    style JS fill:#6366f1,color:#fff,stroke:#333,stroke-width:2px
+    style US fill:#6366f1,color:#fff,stroke:#333,stroke-width:2px
+    style AS fill:#6366f1,color:#fff,stroke:#333,stroke-width:2px
+    style NS fill:#6366f1,color:#fff,stroke:#333,stroke-width:2px
 ```
 
 </details>

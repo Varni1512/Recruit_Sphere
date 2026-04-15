@@ -81,3 +81,10 @@ export async function logoutAction() {
     cookies().delete('uid')
     return { success: true }
 }
+
+// Backward Compatibility Aliases to resolve persistent build issues
+export { 
+    sendOTPAction as sendOTP, 
+    resetPasswordAction as resetPassword,
+    registerCandidateAction as registerCandidate 
+}

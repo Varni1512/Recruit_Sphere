@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { loginSchema, registerSchema, LoginInput, RegisterInput } from "@/shared/schemas/authSchema"
-import { loginAction, registerAction } from "@/app/actions/authActions"
+import { loginAction, registerCandidateAction } from "@/app/actions/authActions"
 import { useRouter } from "next/navigation"
 
 export const useAuth = () => {
@@ -47,7 +47,7 @@ export const useAuth = () => {
     setIsLoading(true)
     setError(null)
     try {
-      const res = await registerAction(data)
+      const res = await registerCandidateAction(data)
       if (res.success) {
         router.push(res.user.role === 'recruiter' ? '/' : '/candidate/dashboard')
       } else {

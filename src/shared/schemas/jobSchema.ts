@@ -15,11 +15,11 @@ export const createJobSchema = z.object({
   experience: z.string().min(1, "Experience level is required"),
   salary: z.string().min(1, "Salary is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  atsKeywords: z.array(z.string()).default([]),
-  atsCriteriaScore: z.number().min(0).max(100).default(75),
-  applicationCloseDays: z.number().min(1).default(7),
-  hiringDeadlineDays: z.number().min(1).default(30),
-  hiringPipeline: z.array(hiringRoundSchema).default([]),
+  atsKeywords: z.array(z.string()),
+  atsCriteriaScore: z.number().min(0).max(100),
+  applicationCloseDays: z.number().min(1),
+  hiringDeadlineDays: z.number().min(1),
+  hiringPipeline: z.array(hiringRoundSchema),
 });
 
 export type CreateJobInput = z.infer<typeof createJobSchema>;

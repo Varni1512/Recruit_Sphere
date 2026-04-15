@@ -86,5 +86,7 @@ export async function logoutAction() {
 export { 
     sendOTPAction as sendOTP, 
     resetPasswordAction as resetPassword,
-    registerCandidateAction as registerCandidate 
+    registerCandidateAction as registerCandidate,
+    registerCandidateAction as registerAction,
+    loginAction as loginCandidate
 }

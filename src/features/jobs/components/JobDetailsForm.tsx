@@ -15,7 +15,7 @@ import dynamic from 'next/dynamic'
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
 interface JobDetailsFormProps {
-  form: UseFormReturn<CreateJobInput>
+  form: UseFormReturn<any>
 }
 
 export const JobDetailsForm = ({ form }: JobDetailsFormProps) => {
@@ -30,7 +30,7 @@ export const JobDetailsForm = ({ form }: JobDetailsFormProps) => {
             placeholder="e.g. Senior Product Designer" 
             {...register("title")} 
           />
-          {errors.title && <span className="text-xs text-destructive">{errors.title.message}</span>}
+          {errors.title && <span className="text-xs text-destructive">{errors.title.message as any}</span>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -47,7 +47,7 @@ export const JobDetailsForm = ({ form }: JobDetailsFormProps) => {
                       <SelectItem value="sales">Sales</SelectItem>
                   </SelectContent>
               </Select>
-              {errors.department && <span className="text-xs text-destructive">{errors.department.message}</span>}
+              {errors.department && <span className="text-xs text-destructive">{errors.department.message as any}</span>}
           </div>
           <div className="grid gap-2">
               <Label htmlFor="type">Employment Type</Label>
@@ -62,7 +62,7 @@ export const JobDetailsForm = ({ form }: JobDetailsFormProps) => {
                       <SelectItem value="internship">Internship</SelectItem>
                   </SelectContent>
               </Select>
-              {errors.type && <span className="text-xs text-destructive">{errors.type.message}</span>}
+              {errors.type && <span className="text-xs text-destructive">{errors.type.message as any}</span>}
           </div>
       </div>
 
@@ -79,12 +79,12 @@ export const JobDetailsForm = ({ form }: JobDetailsFormProps) => {
                       <SelectItem value="onsite">On-site</SelectItem>
                   </SelectContent>
               </Select>
-              {errors.locationType && <span className="text-xs text-destructive">{errors.locationType.message}</span>}
+              {errors.locationType && <span className="text-xs text-destructive">{errors.locationType.message as any}</span>}
           </div>
           <div className="grid gap-2">
               <Label htmlFor="location">Location</Label>
               <Input id="location" placeholder="e.g. New York, NY" {...register("location")} />
-              {errors.location && <span className="text-xs text-destructive">{errors.location.message}</span>}
+              {errors.location && <span className="text-xs text-destructive">{errors.location.message as any}</span>}
           </div>
       </div>
 
@@ -102,12 +102,12 @@ export const JobDetailsForm = ({ form }: JobDetailsFormProps) => {
                       <SelectItem value="Director/Executive">Director/Executive</SelectItem>
                   </SelectContent>
               </Select>
-              {errors.experience && <span className="text-xs text-destructive">{errors.experience.message}</span>}
+              {errors.experience && <span className="text-xs text-destructive">{errors.experience.message as any}</span>}
           </div>
           <div className="grid gap-2">
               <Label htmlFor="salary">Estimated Salary</Label>
               <Input id="salary" placeholder="e.g. $80,000 - $100,000" {...register("salary")} />
-              {errors.salary && <span className="text-xs text-destructive">{errors.salary.message}</span>}
+              {errors.salary && <span className="text-xs text-destructive">{errors.salary.message as any}</span>}
           </div>
       </div>
 
@@ -141,7 +141,7 @@ export const JobDetailsForm = ({ form }: JobDetailsFormProps) => {
                   className="w-full"
               />
           </div>
-          {errors.description && <span className="text-xs text-destructive">{errors.description.message}</span>}
+          {errors.description && <span className="text-xs text-destructive">{errors.description.message as any}</span>}
       </div>
     </div>
   )

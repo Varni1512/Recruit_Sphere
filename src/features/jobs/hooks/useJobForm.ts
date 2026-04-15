@@ -3,6 +3,8 @@ import { useState } from "react"
 import { createJob } from "@/app/actions/jobActions"
 import { useRouter } from "next/navigation"
 import { extractKeywordsFromText } from "@/lib/atsUtils"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 
 export const useJobForm = () => {
   const router = useRouter()

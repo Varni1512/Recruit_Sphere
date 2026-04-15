@@ -16,7 +16,7 @@ import { Save, X } from "lucide-react"
 import { useState } from "react"
 
 interface ATSConfigModalProps {
-  form: UseFormReturn<CreateJobInput>
+  form: UseFormReturn<any>
   open: boolean
   onOpenChange: (open: boolean) => void
   isSaving: boolean
@@ -41,7 +41,7 @@ export const ATSConfigModal = ({
   }
 
   const removeKeyword = (index: number) => {
-    form.setValue("atsKeywords", keywords.filter((_, i) => i !== index))
+    form.setValue("atsKeywords", keywords.filter((_: any, i: number) => i !== index))
   }
 
   return (
@@ -58,7 +58,7 @@ export const ATSConfigModal = ({
                     <Label>Extracted Keywords</Label>
                     <div className="flex flex-wrap gap-2 border rounded-md p-3 bg-muted/50 min-h-[80px] content-start">
                         {keywords.length === 0 ? <p className="text-sm text-muted-foreground">No keywords extracted.</p> : null}
-                        {keywords.map((keyword, i) => (
+                        {keywords.map((keyword: any, i: number) => (
                             <Badge key={i} variant="secondary" className="flex items-center gap-1 pr-1.5 py-1">
                                 {keyword}
                                 <button 

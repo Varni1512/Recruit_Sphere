@@ -93,7 +93,8 @@ export class ApplicationService {
       candidateName: app.firstName,
       role: job.title,
       status: status,
-      reason: status === 'Rejected' ? reason : undefined
+      reason: status === 'Rejected' ? reason : undefined,
+      message: this.getNotificationMessage(app.firstName, job.title, status, reason)
     })
 
     await sendEmail({

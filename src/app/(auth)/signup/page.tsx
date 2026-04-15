@@ -7,7 +7,7 @@ import { motion } from "framer-motion"
 import { UserPlus, Loader2, ChevronRight } from "lucide-react"
 
 import { setRoleCookie } from "@/app/actions/auth"
-import { registerCandidate } from "@/app/actions/authActions"
+import { registerCandidateAction } from "@/app/actions/authActions"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -44,7 +44,7 @@ export default function SignupPage() {
             formDataObj.append("email", email)
             formDataObj.append("password", password)
 
-            const result = await registerCandidate(formDataObj)
+            const result = await registerCandidateAction(formDataObj)
 
             if (result.error) {
                 setError(result.error)

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { LogIn, Loader2, ChevronRight } from "lucide-react"
 
-import { loginCandidate } from "@/app/actions/authActions"
+import { loginAction } from "@/app/actions/authActions"
 import { setRoleCookie } from "@/app/actions/auth"
 import { Button } from "@/components/ui/button"
 import {
@@ -79,7 +79,7 @@ export default function LoginPage() {
             formDataObj.append("email", email)
             formDataObj.append("password", password)
 
-            const result = await loginCandidate(formDataObj)
+            const result = await loginAction(formDataObj)
 
             if (result.error) {
                 setError(result.error)

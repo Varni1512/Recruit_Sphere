@@ -5,7 +5,7 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, Mail, KeyRound, Lock, CheckCircle2, ChevronRight, Loader2 } from "lucide-react"
 
-import { sendOTP, verifyOTP, resetPassword } from "@/app/actions/authActions"
+import { sendOTPAction, resetPasswordAction } from "@/app/actions/authActions"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
         const emailInput = formData.get("email") as string
         
         try {
-            const result = await sendOTP(emailInput)
+            const result = await sendOTPAction(emailInput)
             if (result.error) {
                 setError(result.error)
             } else {
@@ -58,13 +58,10 @@ export default function ForgotPasswordPage() {
         const otpInput = formData.get("otp") as string
         
         try {
-            const result = await verifyOTP(email, otpInput)
-            if (result.error) {
-                setError(result.error)
-            } else {
-                setOtp(otpInput)
-                setStep("reset")
-            }
+            // In the new architecture, we verify the OTP during the final reset step
+            // This client-side transition just captures the OTP
+            setOtp(otpInput)
+            setStep("reset")
         } catch (err: any) {
             setError("Something went wrong. Please try again.")
         } finally {
@@ -92,7 +89,11 @@ export default function ForgotPasswordPage() {
         resetData.append("password", password)
 
         try {
-            const result = await resetPassword(resetData)
+            const result = await resetPasswordAction({
+                email,
+                otp,
+                password
+            })
             if (result.error) {
                 setError(result.error)
             } else {

@@ -25,7 +25,7 @@ export async function getNotifications(email: string) {
     try {
         if (!email) return { success: false, notifications: [] }
         await connectToDatabase()
-        const notifications = await Notification.find({ recipientEmail: email })
+        const notifications = await Notification.find({ recipientEmail: email, read: false })
             .sort({ createdAt: -1 })
             .limit(50)
             .lean()
@@ -63,7 +63,7 @@ export async function markAllAsRead(email: string) {
     try {
         if (!email) return { success: false }
         await connectToDatabase()
-        await Notification.updateMany({ recipientEmail: email, read: false }, { read: true })
+        await Notification.deleteMany({ recipientEmail: email })
         return { success: true }
     } catch (error: any) {
         console.error("Failed to mark all notifications as read:", error)

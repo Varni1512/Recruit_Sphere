@@ -39,10 +39,11 @@ export default function SignupPage() {
 
         try {
             const formDataObj = new FormData()
-            formDataObj.append("first-name", firstName)
-            formDataObj.append("last-name", lastName)
+            formDataObj.append("firstName", firstName)
+            formDataObj.append("lastName", lastName)
             formDataObj.append("email", email)
             formDataObj.append("password", password)
+            formDataObj.append("role", "candidate")
 
             const result = await registerCandidateAction(formDataObj)
 

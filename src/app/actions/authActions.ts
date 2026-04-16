@@ -16,7 +16,7 @@ export async function registerCandidateAction(data: any) {
         return { success: true, user }
     } catch (error: any) {
         console.error("Register Error:", error)
-        if (error.name === "ZodError") {
+        if (error.name === "ZodError" && error.errors) {
             const messages = error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(", ");
             return { error: `Validation failed: ${messages}` }
         }
@@ -45,7 +45,7 @@ export async function loginAction(data: any) {
         return { success: true, user: safeUser }
     } catch (error: any) {
         console.error("Login Error:", error)
-        if (error.name === "ZodError") {
+        if (error.name === "ZodError" && error.errors) {
             const messages = error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(", ");
             return { error: `Validation failed: ${messages}` }
         }
@@ -80,7 +80,7 @@ export async function resetPasswordAction(data: any) {
         return { success: true }
     } catch (error: any) {
         console.error("Reset Password Error:", error)
-        if (error.name === "ZodError") {
+        if (error.name === "ZodError" && error.errors) {
             const messages = error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(", ");
             return { error: `Validation failed: ${messages}` }
         }

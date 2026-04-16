@@ -11,6 +11,7 @@ import { sendEmail } from "@/lib/email"
 import { getRecruitmentEmailTemplate } from "@/lib/emailTemplates"
 import { JobService } from "@/services/jobService"
 import { createJobSchema } from "@/shared/schemas/jobSchema"
+import { calculateATSScore } from "@/lib/atsScoring"
 
 const capitalize = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
@@ -160,39 +161,51 @@ export async function applyToJob(data: any) {
             return { success: false, error: "Applications for this job are now closed." }
         }
         
-        let calculatedScore = Math.floor(Math.random() * 20) + 60; // fallback mock
+        let calculatedScore = 0; // Prevent unparseable docs from getting random passing scores
         let initialStatus = "Applied";
         let rejectionReason = "";
+        let parserCrashError = ""; // Store for UI debugging
 
-        // Perform ATS Parsing
+        // Perform ATS Parsing via TF-IDF ML
         if (data.resumeUrl && job && job.atsKeywords && job.atsKeywords.length > 0) {
+            let parser;
             try {
                 const pdfParse = require('pdf-parse');
-                const pdfResponse = await fetch(data.resumeUrl);
-                const arrayBuffer = await pdfResponse.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-                const pdfData = await pdfParse(buffer);
-                const pdfText = pdfData.text.toLowerCase();
-
-                let matches = 0;
-                for (const word of job.atsKeywords) {
-                    const safeWord = word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const wordBoundaryRegex = new RegExp(`\\b${safeWord}\\b`, 'i');
-                    
-                    if (wordBoundaryRegex.test(pdfText)) {
-                        matches++;
+                
+                let buffer;
+                if (data.resumeUrl.startsWith('http')) {
+                    const pdfResponse = await fetch(data.resumeUrl, { cache: 'no-store' });
+                    if (!pdfResponse.ok) {
+                        throw new Error(`Failed to fetch from Cloudinary. Status: ${pdfResponse.status}`);
                     }
+                    const arrayBuffer = await pdfResponse.arrayBuffer();
+                    buffer = Buffer.from(arrayBuffer);
+                } else {
+                    const fs = require('fs');
+                    const path = require('path');
+                    // Remove leading slash if present, and read from public dir
+                    const cleanPath = data.resumeUrl.startsWith('/') ? data.resumeUrl.slice(1) : data.resumeUrl;
+                    const filePath = path.join(process.cwd(), 'public', cleanPath);
+                    buffer = fs.readFileSync(filePath);
                 }
                 
-                const matchPercentage = matches / job.atsKeywords.length;
-                calculatedScore = Math.floor(50 + (matchPercentage * 50));
-            } catch (error) {
-                console.error("ATS Resume Parsing failed: ", error);
+                const result = await pdfParse(buffer);
+                const pdfText = result.text || "";
+
+                calculatedScore = calculateATSScore(pdfText, job.description || "", job.atsKeywords);
+                
+            } catch (error: any) {
+                console.error("ATS Resume Parsing failed (Likely invalid document format or fetch error): ", error);
+                calculatedScore = 0; 
+                parserCrashError = error.message || "Unknown PDF parsing internal error";
             }
         }
 
         if (job && typeof job.atsCriteriaScore === 'number') {
-            if (calculatedScore >= job.atsCriteriaScore) {
+            if (parserCrashError) {
+                initialStatus = "Rejected";
+                rejectionReason = `SYSTEM ERROR: Failed to extract text from Resume PDF. Details: ${parserCrashError}`;
+            } else if (calculatedScore >= job.atsCriteriaScore) {
                 initialStatus = "Shortlisted";
             } else {
                 initialStatus = "Rejected";

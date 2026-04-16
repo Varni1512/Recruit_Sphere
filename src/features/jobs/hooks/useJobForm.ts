@@ -27,32 +27,54 @@ export const useJobForm = () => {
       applicationCloseDays: 3,
       hiringDeadlineDays: 15,
       hiringPipeline: [
-        { roundName: "Aptitude", totalScore: 100, passingScore: 70 },
-        { roundName: "Coding", totalScore: 100, passingScore: 70 },
-        { roundName: "AI Interview", totalScore: 100, passingScore: 70 },
-        { roundName: "Technical Interview", totalScore: 100, passingScore: 70 },
-        { roundName: "Final Interview", totalScore: 100, passingScore: 70 },
+        { roundName: "Aptitude", totalScore: 100, passingScore: 70, selected: true },
+        { roundName: "Coding", totalScore: 100, passingScore: 70, selected: true },
+        { roundName: "AI Interview", totalScore: 100, passingScore: 70, selected: true },
+        { roundName: "Technical Interview", totalScore: 100, passingScore: 70, selected: true },
+        { roundName: "Final Interview", totalScore: 100, passingScore: 70, selected: true },
       ],
     },
   })
 
-  const handlePreSave = () => {
-    const { title, description, department, type, locationType, location, experience, salary } = form.getValues()
+  const handlePreSave = async () => {
+    // Trigger validation for all fields
+    const isValid = await form.trigger()
     
-    if (!title || !department || !type || !locationType || !location || !experience || !salary) {
-      alert("Please fill in all required fields.")
+    if (!isValid) {
+      const errorMessages = Object.entries(form.formState.errors)
+        .map(([field, error]) => {
+          const fieldName = field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')
+          return `${fieldName}: ${error?.message}`
+        })
+        .join("\n")
+      
+      alert(`Please fix the following errors before saving:\n\n${errorMessages}`)
       return
     }
 
+    const { title, description } = form.getValues()
     const extracted = extractKeywordsFromText(description || title)
     form.setValue("atsKeywords", extracted)
     setShowATSModal(true)
   }
 
   const onSubmit = async (data: CreateJobInput) => {
+    // Filter out rounds that are not selected
+    const selectedPipeline = data.hiringPipeline.filter(round => round.selected)
+    
+    if (selectedPipeline.length === 0) {
+      alert("Please select at least one round for the hiring pipeline.")
+      return
+    }
+
+    const submissionData = {
+      ...data,
+      hiringPipeline: selectedPipeline
+    }
+
     setIsSaving(true)
     try {
-      const result = await createJob(data)
+      const result = await createJob(submissionData)
       if (result.success) {
         router.push('/jobs')
       } else {

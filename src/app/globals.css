@@ -124,3 +124,33 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom Markdown Styles */
+.custom-markdown ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.custom-markdown ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.custom-markdown li {
+  display: list-item !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.custom-markdown p {
+  margin-bottom: 1.25rem !important;
+}
+
+.custom-markdown h1, 
+.custom-markdown h2, 
+.custom-markdown h3 {
+  margin-top: 1.5rem !important;
+  margin-bottom: 1rem !important;
+  font-weight: 600 !important;
+}

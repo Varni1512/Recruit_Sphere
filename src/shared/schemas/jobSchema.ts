@@ -4,6 +4,7 @@ export const hiringRoundSchema = z.object({
   roundName: z.string().min(1, "Round name is required"),
   totalScore: z.number().min(0),
   passingScore: z.number().min(0),
+  selected: z.boolean().optional(),
 });
 
 export const createJobSchema = z.object({

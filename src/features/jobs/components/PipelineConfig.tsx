@@ -29,34 +29,61 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {fields.map((field: any, index: number) => (
-          <div key={field.id} className="p-4 rounded-xl border transition-all bg-primary/5 border-primary/20 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <Label className="font-semibold cursor-pointer">{field.roundName}</Label>
+        {fields.map((field: any, index: number) => {
+          const isSelected = form.watch(`hiringPipeline.${index}.selected`);
+          
+          return (
+            <div 
+              key={field.id} 
+              className={`p-4 rounded-xl border transition-all shadow-sm ${
+                isSelected 
+                  ? "bg-primary/5 border-primary/20" 
+                  : "bg-muted/50 border-border opacity-60"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`round-${index}`}
+                      checked={isSelected}
+                      onCheckedChange={(checked) => {
+                        form.setValue(`hiringPipeline.${index}.selected`, !!checked);
+                      }}
+                    />
+                    <Label 
+                      htmlFor={`round-${index}`}
+                      className={`font-semibold cursor-pointer ${!isSelected && "text-muted-foreground"}`}
+                    >
+                      {field.roundName}
+                    </Label>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs text-muted-foreground">Total Score</Label>
+                  <Input 
+                    type="number" 
+                    className="h-8 text-sm"
+                    disabled={!isSelected}
+                    {...form.register(`hiringPipeline.${index}.totalScore`, { valueAsNumber: true })} 
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs text-muted-foreground">Passing Score</Label>
+                  <Input 
+                    type="number" 
+                    className="h-8 text-sm text-primary font-medium"
+                    disabled={!isSelected}
+                    {...form.register(`hiringPipeline.${index}.passingScore`, { valueAsNumber: true })} 
+                  />
+                </div>
               </div>
             </div>
-            
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              <div className="grid gap-1.5">
-                <Label className="text-xs text-muted-foreground">Total Score</Label>
-                <Input 
-                  type="number" 
-                  className="h-8 text-sm"
-                  {...form.register(`hiringPipeline.${index}.totalScore`, { valueAsNumber: true })} 
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label className="text-xs text-muted-foreground">Passing Score</Label>
-                <Input 
-                  type="number" 
-                  className="h-8 text-sm text-primary font-medium"
-                  {...form.register(`hiringPipeline.${index}.passingScore`, { valueAsNumber: true })} 
-                />
-              </div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   )

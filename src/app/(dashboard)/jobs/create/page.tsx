@@ -32,11 +32,11 @@ export default function CreateJobPage() {
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" asChild>
                     <Link href="/jobs">
-                        <ArrowLeft className="h-4 w-4" />
+                        <ArrowLeft className="h-6 w-6" />
                     </Link>
                 </Button>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Post a New Job</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Post a New Job</h1>
                     <p className="text-muted-foreground">
                         Fill out the details to create a new job opening.
                     </p>

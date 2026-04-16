@@ -16,16 +16,20 @@ const capitalize = (str: string) => str ? str.charAt(0).toUpperCase() + str.slic
 
 export async function createJob(data: any) {
     try {
-        const validatedData = createJobSchema.parse(data)
+        const payload = data instanceof FormData ? Object.fromEntries(data.entries()) : data
+        const validatedData = createJobSchema.parse(payload)
         const newJob = await JobService.createJob(validatedData)
 
-        // Tell Next.js to immediately purge the cache for the jobs pages so queries refresh in realtime
         revalidatePath('/jobs')
         revalidatePath('/candidate/jobs')
         
         return { success: true, jobId: (newJob as any)._id.toString() }
     } catch (error: any) {
         console.error("Failed to create job:", error)
+        if (error.name === "ZodError") {
+            const messages = error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(", ");
+            return { success: false, error: `Validation failed: ${messages}` }
+        }
         return { success: false, error: error.message || "An unexpected error occurred" }
     }
 }

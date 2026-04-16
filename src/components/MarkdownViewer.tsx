@@ -12,7 +12,13 @@ export default function MarkdownViewer({ source }: { source: string }) {
         <div data-color-mode="light" className="w-full">
             <MarkdownPreview 
                 source={source} 
-                style={{ backgroundColor: 'transparent', color: 'inherit', fontFamily: 'inherit' }} 
+                className="markdown-body custom-markdown"
+                style={{ 
+                    backgroundColor: 'transparent', 
+                    color: 'inherit', 
+                    fontFamily: 'inherit',
+                    fontSize: '0.95rem'
+                }} 
             />
         </div>
     )

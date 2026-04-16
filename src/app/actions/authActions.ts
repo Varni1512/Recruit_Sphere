@@ -6,31 +6,33 @@ import { cookies } from "next/headers"
 
 export async function registerCandidateAction(data: any) {
     try {
-        const validatedData = registerSchema.parse(data)
+        const payload = data instanceof FormData ? Object.fromEntries(data.entries()) : data
+        const validatedData = registerSchema.parse(payload)
         const user = await AuthService.register(validatedData)
         
-        // In a real production app, we would set a secure session cookie here
-        // For now, we follow the existing pattern of returning the user object
-        // but we'll ensure the role is set correctly in a cookie for the middleware
         cookies().set('role', user.role, { path: '/' })
         cookies().set('uid', user.uid, { path: '/' })
 
         return { success: true, user }
     } catch (error: any) {
         console.error("Register Error:", error)
+        if (error.name === "ZodError") {
+            const messages = error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(", ");
+            return { error: `Validation failed: ${messages}` }
+        }
         return { error: error.message || "Failed to register" }
     }
 }
 
 export async function loginAction(data: any) {
     try {
-        const { email, password } = loginSchema.parse(data)
+        const payload = data instanceof FormData ? Object.fromEntries(data.entries()) : data
+        const { email, password } = loginSchema.parse(payload)
         const user = await AuthService.authenticate(email, password)
 
         cookies().set('role', user.role, { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' })
         cookies().set('uid', user.uid, { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' })
 
-        // Ensure we only return serialize-safe, plain values
         const safeUser = {
             uid: String(user.uid),
             email: user.email,
@@ -43,6 +45,10 @@ export async function loginAction(data: any) {
         return { success: true, user: safeUser }
     } catch (error: any) {
         console.error("Login Error:", error)
+        if (error.name === "ZodError") {
+            const messages = error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(", ");
+            return { error: `Validation failed: ${messages}` }
+        }
         return { error: error.message || "Invalid email or password" }
     }
 }
@@ -68,10 +74,16 @@ export async function sendOTPAction(email: string) {
 
 export async function resetPasswordAction(data: any) {
     try {
-        const validatedData = resetPasswordSchema.parse(data)
+        const payload = data instanceof FormData ? Object.fromEntries(data.entries()) : data
+        const validatedData = resetPasswordSchema.parse(payload)
         await AuthService.resetPassword(validatedData)
         return { success: true }
     } catch (error: any) {
+        console.error("Reset Password Error:", error)
+        if (error.name === "ZodError") {
+            const messages = error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(", ");
+            return { error: `Validation failed: ${messages}` }
+        }
         return { error: error.message || "Failed to reset password" }
     }
 }

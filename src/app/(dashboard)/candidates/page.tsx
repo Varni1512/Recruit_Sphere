@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/dialog"
 
 import { getAllApplications, updateApplicationStatus } from "@/app/actions/jobActions"
-import { StatusActionItem, RejectActionItem } from "./StatusActions"
+import { StatusActionItem, RejectActionItem, SendEmailActionItem } from "./StatusActions"
 
 const normalizeResumeUrl = (url: string) =>
     url.startsWith("http://res.cloudinary.com") ? url.replace("http://", "https://") : url
@@ -287,26 +287,33 @@ export default async function CandidatesPage() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem>Send Email</DropdownMenuItem>
+                                                <SendEmailActionItem candidateId={candidate.id} />
                                                 <DropdownMenuSub>
                                                     <DropdownMenuSubTrigger>Update Status</DropdownMenuSubTrigger>
                                                     <DropdownMenuPortal>
                                                         <DropdownMenuSubContent>
-                                                            {["Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"].map((stage) => {
-                                                                const stages = ["Applied", "Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"];
-                                                                const currentIndex = stages.indexOf(candidate.status);
-                                                                const targetIndex = stages.indexOf(stage);
-                                                                const isDisabled = targetIndex <= currentIndex || candidate.status === "Rejected";
+                                                            {(() => {
+                                                                const jobStages = candidate.pipelineStages && candidate.pipelineStages.length > 0 
+                                                                    ? candidate.pipelineStages 
+                                                                    : ["Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"];
+                                                                const displayStages = jobStages.filter((s: string) => s !== "Applied");
+                                                                const stages = ["Applied", ...displayStages];
+                                                                
+                                                                return displayStages.map((stage: string) => {
+                                                                    const currentIndex = stages.indexOf(candidate.status);
+                                                                    const targetIndex = stages.indexOf(stage);
+                                                                    const isDisabled = targetIndex <= currentIndex || candidate.status === "Rejected";
 
-                                                                return (
-                                                                    <StatusActionItem 
-                                                                        key={stage} 
-                                                                        stage={stage} 
-                                                                        candidateId={candidate.id} 
-                                                                        isDisabled={isDisabled} 
-                                                                    />
-                                                                );
-                                                            })}
+                                                                    return (
+                                                                        <StatusActionItem 
+                                                                            key={stage} 
+                                                                            stage={stage} 
+                                                                            candidateId={candidate.id} 
+                                                                            isDisabled={isDisabled} 
+                                                                        />
+                                                                    );
+                                                                })
+                                                            })()}
                                                         </DropdownMenuSubContent>
                                                     </DropdownMenuPortal>
                                                 </DropdownMenuSub>

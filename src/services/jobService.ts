@@ -17,8 +17,10 @@ export class JobService {
     const deadlineDate = new Date()
     deadlineDate.setDate(deadlineDate.getDate() + hiringDeadlineDays)
 
+    const selectedRounds = data.hiringPipeline.filter((r: any) => r.selected !== false)
+
     const roundSchedule = this.calculateRoundSchedule(
-      data.hiringPipeline, 
+      selectedRounds, 
       applicationCloseDate, 
       hiringDeadlineDays - applicationCloseDays
     )
@@ -31,6 +33,7 @@ export class JobService {
       tags,
       applicationCloseDate,
       deadline: deadlineDate,
+      hiringPipeline: selectedRounds,
       roundSchedule,
       status: "Active"
     })

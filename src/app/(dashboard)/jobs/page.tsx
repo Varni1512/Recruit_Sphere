@@ -5,6 +5,10 @@ import { Building2, Calendar, MapPin, MoreHorizontal, Plus } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import * as XLSX from "xlsx"
+import { Download } from "lucide-react"
 import {
     Card,
     CardContent,
@@ -23,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { getAllJobs, updateJobStatus, deleteJob } from "@/app/actions/jobActions"
+import { getAllJobs, updateJobStatus, deleteJob, getApplicationsByJobId } from "@/app/actions/jobActions"
 import {
     Tabs,
     TabsContent,
@@ -34,6 +38,33 @@ import {
 function JobCard({ job, onUpdate }: { job: any, onUpdate: () => void }) {
     const router = useRouter()
     const [isProcessing, setIsProcessing] = useState(false)
+    const [candidates, setCandidates] = useState<any[]>([])
+    const [loadingCandidates, setLoadingCandidates] = useState(false)
+    const [dialogOpen, setDialogOpen] = useState(false)
+
+    const fetchJobCandidates = async () => {
+        setLoadingCandidates(true)
+        const res = await getApplicationsByJobId(job.id)
+        if (res.success) {
+            setCandidates(res.applications)
+        }
+        setLoadingCandidates(false)
+    }
+
+    const handleDownloadExcel = () => {
+        const worksheetData = candidates.map((c) => ({
+            Name: c.name,
+            Email: c.email,
+            Mobile: c.mobile,
+            Status: c.status,
+            Score: c.score,
+            "Applied At": c.appliedAt,
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Candidates");
+        XLSX.writeFile(workbook, `Candidates_${job.title.replace(/\s+/g, '_')}.xlsx`);
+    }
 
     const handleClose = async () => {
         setIsProcessing(true)
@@ -118,9 +149,69 @@ function JobCard({ job, onUpdate }: { job: any, onUpdate: () => void }) {
                 <Badge variant={job.status === "Active" ? "default" : job.status === "Paused" ? "secondary" : "outline"}>
                     {job.status}
                 </Badge>
-                <div className="flex -space-x-2">
-                    <span className="text-sm font-medium mr-3">{job.candidates} candidates</span>
-                </div>
+                <Dialog open={dialogOpen} onOpenChange={(open) => {
+                    setDialogOpen(open);
+                    if (open) fetchJobCandidates();
+                }}>
+                    <DialogTrigger asChild>
+                        <div className="flex -space-x-2 cursor-pointer hover:underline text-primary">
+                            <span className="text-sm font-medium mr-3">{job.candidates} candidates</span>
+                        </div>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto w-[90vw]">
+                        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4 mb-4">
+                            <DialogTitle>Candidates for {job.title}</DialogTitle>
+                            <Button size="sm" onClick={handleDownloadExcel} className="mr-6">
+                                <Download className="h-4 w-4 mr-2" /> Download Excel
+                            </Button>
+                        </DialogHeader>
+                        {loadingCandidates ? (
+                            <div className="py-8 text-center text-muted-foreground">Loading candidates...</div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Candidate</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Score</TableHead>
+                                        <TableHead>Date</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {candidates.length === 0 && (
+                                         <TableRow>
+                                            <TableCell colSpan={4} className="text-center text-muted-foreground">No candidates found.</TableCell>
+                                        </TableRow>
+                                    )}
+                                    {candidates.map((c) => (
+                                        <TableRow 
+                                            key={c.id} 
+                                            className={c.status === "Rejected" ? "bg-red-500/10 hover:bg-red-500/20" : c.status === "Shortlisted" ? "bg-green-500/10 hover:bg-green-500/20" : ""}
+                                        >
+                                            <TableCell>
+                                                <div className="font-medium text-sm">{c.name}</div>
+                                                <div className="text-xs text-muted-foreground">{c.email}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant={
+                                                        c.status === "Hire" || c.status === "Offer" ? "default" :
+                                                        c.status === "Rejected" ? "destructive" :
+                                                        c.status === "Applied" ? "outline" : "secondary"
+                                                    }
+                                                >
+                                                    {c.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>{c.score}</TableCell>
+                                            <TableCell>{c.appliedAt}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </DialogContent>
+                </Dialog>
             </CardFooter>
         </Card>
     )

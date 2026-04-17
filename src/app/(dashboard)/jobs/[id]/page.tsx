@@ -12,6 +12,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { getJobById } from "@/app/actions/jobActions"
 import MarkdownViewer from "@/components/MarkdownViewer"
+import { RoundScheduleOverview } from "@/features/jobs/components/RoundScheduleOverview"
 
 export default async function JobDetailsPage({ params }: { params: { id: string } }) {
     const id = params.id
@@ -29,6 +30,8 @@ export default async function JobDetailsPage({ params }: { params: { id: string 
             </div>
         )
     }
+
+    const { roundSchedule = [], applicationCloseDate = null } = job;
 
     return (
         <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
@@ -119,6 +122,12 @@ export default async function JobDetailsPage({ params }: { params: { id: string 
                             </div>
                         </CardContent>
                     </Card>
+
+                    <RoundScheduleOverview 
+                        jobId={job.id} 
+                        initialSchedule={roundSchedule} 
+                        applicationCloseDate={applicationCloseDate} 
+                    />
                 </div>
             </div>
         </div>

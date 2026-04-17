@@ -94,7 +94,12 @@ export async function getJobById(id: string) {
                 atsKeywords: job.atsKeywords || [],
                 atsCriteriaScore: job.atsCriteriaScore || 75,
                 status: job.status,
-                candidates: job.candidatesCount
+                candidates: job.candidatesCount,
+                roundSchedule: (job.roundSchedule || []).map((rs: any) => ({
+                    roundName: rs.roundName,
+                    date: rs.date ? new Date(rs.date).toISOString() : null
+                })),
+                applicationCloseDate: job.applicationCloseDate ? new Date(job.applicationCloseDate).toISOString() : null
             }
         }
     } catch (error: any) {
@@ -122,6 +127,23 @@ export async function deleteJob(id: string) {
         revalidatePath('/candidate/jobs')
         return { success: true }
     } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function updateJobSchedule(id: string, roundScheduleData: { roundName: string, date: string }[]) {
+    try {
+        await connectToDatabase()
+        const formattedSchedule = roundScheduleData.map(rs => ({
+            roundName: rs.roundName,
+            date: new Date(rs.date)
+        }))
+        await Job.findByIdAndUpdate(id, { roundSchedule: formattedSchedule })
+        revalidatePath('/jobs')
+        revalidatePath(`/jobs/${id}`)
+        return { success: true }
+    } catch (error: any) {
+        console.error("Failed to update job schedule:", error)
         return { success: false, error: error.message }
     }
 }

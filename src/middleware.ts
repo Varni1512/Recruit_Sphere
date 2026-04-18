@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
     const path = request.nextUrl.pathname
 
     const isAuthRoute = path === '/login' || path === '/signup' || path === '/forgot-password'
-    const isPublicPage = path === '/terms' || path === '/privacy'
+    const isPublicPage = path === '/' || path === '/terms' || path === '/privacy'
     const isCandidateRoute = path === '/candidate' || path.startsWith('/candidate/')
 
     // Ignore static files, api routes, Next.js internal paths
@@ -27,7 +27,7 @@ export function middleware(request: NextRequest) {
     // Role redirection logic
     if (isAuthRoute && roleCookie) {
         if (roleCookie === 'recruiter') {
-            return NextResponse.redirect(new URL('/', request.url))
+            return NextResponse.redirect(new URL('/dashboard', request.url))
         } else if (roleCookie === 'candidate') {
             if (profileCompletion >= 80) {
                 return NextResponse.redirect(new URL('/candidate/dashboard', request.url))
@@ -51,7 +51,7 @@ export function middleware(request: NextRequest) {
             }
         }
         if (roleCookie === 'recruiter' && isCandidateRoute) {
-            return NextResponse.redirect(new URL('/', request.url))
+            return NextResponse.redirect(new URL('/dashboard', request.url))
         }
     }
 

@@ -4,13 +4,13 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { 
-    Building2, FileText, Scale, ShieldAlert, Zap,
-    Mail, CheckCircle2, AlertCircle, ArrowLeft
+    Building2, Shield, Lock, Eye, Scale, 
+    ArrowLeft, Mail, Info
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
-export default function TermsPage() {
+export default function PrivacyPage() {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 scroll-smooth">
             {/* Navigation (Consistent with Home) */}
@@ -45,7 +45,7 @@ export default function TermsPage() {
             </header>
 
             <main className="flex-1">
-                <section className="py-16 md:py-16 ">
+                <section className="py-16 md:py-16">
                     <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -60,69 +60,69 @@ export default function TermsPage() {
                             </Button>
 
                             <div className="space-y-4">
-                                <h1 className="text-3xl md:text-4xl font-black tracking-tight uppercase">Terms of Service</h1>
-                                <p className="text-muted-foreground font-medium">Effective Date: April 18, 2026</p>
-                                <div className="h-1 w-20 bg-primary" />
+                                <h1 className="text-3xl md:text-4xl font-black tracking-tight uppercase">Privacy Policy</h1>
+                                <p className="text-muted-foreground font-medium">Last Updated: April 18, 2026</p>
+                                <div className="h-1.5 w-20 bg-primary" />
                             </div>
 
                             <div className="prose prose-neutral dark:prose-invert max-w-none space-y-10">
                                 <section className="space-y-4">
                                     <div className="flex items-center gap-3 text-primary">
-                                        <Scale className="h-6 w-6" />
-                                        <h2 className="text-2xl font-bold m-0 text-foreground">1. Service Definition</h2>
+                                        <Info className="h-6 w-6" />
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">Overview</h2>
                                     </div>
                                     <p className="text-lg leading-relaxed text-muted-foreground">
-                                        Recruit Sphere operates as a <strong>Hiring-as-a-Service (HaaS)</strong> agency. We provide an end-to-end recruitment engine that uses AI to source, screen, and verify candidates for our client companies. By using our platform, you acknowledge that we are the sole administrator of the software and recruitment pipeline.
+                                        At Recruit Sphere, we operate as a professional hiring agency. Your privacy is paramount. This policy outlines how we handle candidate data and client information within our AI-driven recruitment pipeline.
                                     </p>
                                 </section>
 
-                                <section className="space-y-6">
+                                <section className="space-y-4">
                                     <div className="flex items-center gap-3 text-primary">
-                                        <Zap className="h-6 w-6" />
-                                        <h2 className="text-2xl font-bold m-0 text-foreground">2. User Responsibilities</h2>
+                                        <Lock className="h-6 w-6" />
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">Data Collection</h2>
                                     </div>
-                                    
-                                    <div className="grid md:grid-cols-2 gap-6">
-                                        <div className="p-6 rounded-xl border bg-muted/20 space-y-3">
-                                            <h4 className="font-bold flex items-center gap-2">
-                                                <Building2 className="h-4 w-4 text-primary" /> Client Companies
-                                            </h4>
-                                            <p className="text-xs text-muted-foreground leading-relaxed">
-                                                Clients must provide accurate job descriptions and adhere to established hiring deadlines. Recruit Sphere is not responsible for hiring decisions made by clients.
-                                            </p>
-                                        </div>
-                                        <div className="p-6 rounded-xl border bg-muted/20 space-y-3">
-                                            <h4 className="font-bold flex items-center gap-2">
-                                                <CheckCircle2 className="h-4 w-4 text-primary" /> Candidates
-                                            </h4>
-                                            <p className="text-xs text-muted-foreground leading-relaxed">
-                                                Candidates must provide truthful profile data. Attempting to circumvent proctored assessments or using unauthorized aids during AI interviews is strictly prohibited.
-                                            </p>
-                                        </div>
+                                    <p className="text-muted-foreground">
+                                        We collect information necessary to fulfill our recruitment services:
+                                    </p>
+                                    <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
+                                        <li><strong>Personal Information:</strong> Name, email, phone number, and professional social profiles.</li>
+                                        <li><strong>Professional Data:</strong> Resumes, portfolios, and employment history.</li>
+                                        <li><strong>Assessment Data:</strong> Scores from proctored coding rounds and AI-conducted video interviews.</li>
+                                    </ul>
+                                </section>
+
+                                <section className="space-y-4">
+                                    <div className="flex items-center gap-3 text-primary">
+                                        <Shield className="h-6 w-6" />
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">AI and Data Processing</h2>
+                                    </div>
+                                    <p className="text-muted-foreground font-medium">
+                                        Our platform uses advanced Machine Learning models to:
+                                    </p>
+                                    <div className="p-6 rounded-xl bg-muted/30 border border-primary/10 italic text-sm text-foreground/80">
+                                        "Perform automated resume intelligence, assessment scoring, and behavioral analysis during video interviews to provide objective candidate shortlisting."
                                     </div>
                                 </section>
 
                                 <section className="space-y-4">
                                     <div className="flex items-center gap-3 text-primary">
-                                        <ShieldAlert className="h-6 w-6" />
-                                        <h2 className="text-2xl font-bold m-0 text-foreground">3. AI-Driven Evaluations</h2>
+                                        <Eye className="h-6 w-6" />
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">Third-Party Sharing</h2>
                                     </div>
                                     <p className="text-muted-foreground">
-                                        You acknowledge that our recruitment process involves automated decision-making and AI analysis. While our systems are designed for objective filtering, final selection authority remains with the client company.
+                                        As a service provider for companies, we share candidate data specifically with the client company for the role you have applied for. We do not sell your data to marketers or external data brokers.
                                     </p>
-                                    <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg">
-                                        <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                                        <p className="text-xs text-amber-700 font-medium italic">
-                                            "Recruit Sphere does not guarantee employment or interview placement for any candidate. We facilitate the shortlisting process based on data-driven metrics."
-                                        </p>
-                                    </div>
                                 </section>
 
-                                <section className="space-y-4 border-t pt-10">
-                                    <h2 className="text-2xl font-bold text-foreground">4. Limitation of Liability</h2>
-                                    <p className="text-muted-foreground text-sm">
-                                        In no event shall Recruit Sphere be liable for any damages arising out of the use or inability to use the dashboard, or for any recruitment outcome. We reserve the right to suspend accounts that violate our integrity standards.
+                                <section className="space-y-4 pt-8 border-t">
+                                    <h2 className="text-2xl font-bold text-foreground">Contact Privacy Team</h2>
+                                    <p className="text-muted-foreground">
+                                        If you have questions regarding your data or wish to exercise your right to erasure, please contact us.
                                     </p>
+                                    <div className="flex items-center gap-2 font-bold text-primary">
+                                        <Mail className="h-5 w-5" />
+                                        <a href="mailto:varni1505@gmail.com">varni1505@gmail.com</a>
+                                    </div>
                                 </section>
                             </div>
                         </motion.div>
@@ -130,7 +130,7 @@ export default function TermsPage() {
                 </section>
             </main>
 
-            {/* Footer */}
+            {/* Footer (Consistent with Home) */}
             <footer className="border-t py-12 bg-muted/20 mt-auto">
                 <div className="container mx-auto px-4 md:px-6 lg:px-8">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8">
@@ -142,7 +142,7 @@ export default function TermsPage() {
                         </div>
                         
                         <p className="text-xs text-muted-foreground/60 font-medium" suppressHydrationWarning>
-                            © {new Date().getFullYear()} Recruit Sphere. All rights reserved.
+                            © {new Date().getFullYear()} Recruit Sphere. Internal Administration Only.
                         </p>
 
                         <div className="flex items-center gap-6 text-xs font-bold text-muted-foreground uppercase tracking-widest">

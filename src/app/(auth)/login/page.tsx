@@ -1,10 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
-import { LogIn, Loader2, ChevronRight } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { LogIn, Loader2, ChevronRight, Building2, Sparkles } from "lucide-react"
 
 import { loginAction } from "@/app/actions/authActions"
 import { setRoleCookie } from "@/app/actions/auth"
@@ -24,16 +24,45 @@ import { Label } from "@/components/ui/label"
 export default function LoginPage() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+    const [isRedirecting, setIsRedirecting] = useState(false)
+    const [redirectMessage, setRedirectMessage] = useState("Securing credentials...")
     const [error, setError] = useState<string | null>(null)
 
-    async function processLoginAndRedirect(user: any) {
-        const role = "candidate"
-        document.cookie = `role=${role}; path=/; max-age=604800`
+    // Animation messages for the redirect overlay
+    useEffect(() => {
+        if (isRedirecting) {
+            const messages = [
+                "Authenticating session...",
+                "Running AI profile intelligence...",
+                "Preparing your dashboard...",
+                "Entering Recruit Sphere workspace..."
+            ];
+            let i = 0;
+            const interval = setInterval(() => {
+                setRedirectMessage(messages[i % messages.length]);
+                i++;
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [isRedirecting]);
 
+    async function processLoginAndRedirect(user: any, role: string) {
+        setIsRedirecting(true)
+        
+        // Update cookies for middleware and client role tracking
+        document.cookie = `role=${role}; path=/; max-age=604800`
         try {
             await setRoleCookie(role)
         } catch (e) {
             console.error("Server action cookie set failed", e)
+        }
+
+        if (role === 'recruiter' || role === 'admin') {
+            setRedirectMessage("Entering Management Console...")
+            setTimeout(() => {
+                window.location.href = "/dashboard"
+            }, 1500)
+            return
         }
 
         try {
@@ -46,9 +75,17 @@ export default function LoginPage() {
                 localStorage.setItem(cacheKey, JSON.stringify({ profile, completion }));
                 localStorage.setItem("candidateLastUid", user.uid);
             }
+
+            // Decision logic for candidates
+            if (completion < 80) {
+                setRedirectMessage("Redirecting to profile completion...")
+                setTimeout(() => router.replace("/candidate/profile"), 1200)
+            } else {
+                setRedirectMessage("Opening candidate workspace...")
+                setTimeout(() => router.replace("/candidate/dashboard"), 1200)
+            }
         } catch (e) {
             console.error("Error preloading profile data", e);
-        } finally {
             router.replace("/candidate/dashboard");
         }
     }
@@ -69,7 +106,11 @@ export default function LoginPage() {
                 document.cookie = `role=recruiter; path=/; max-age=604800`;
                 const uid = "recruiter_mock_123"
                 localStorage.setItem("rs_auth_session_uid_v1", uid)
-                window.location.href = "/";
+                setIsRedirecting(true)
+                setRedirectMessage("Entering Management Console...")
+                setTimeout(() => {
+                    window.location.href = "/dashboard";
+                }, 1500)
             }
             return
         }
@@ -100,7 +141,10 @@ export default function LoginPage() {
                     }
                 }
 
-                await processLoginAndRedirect({ uid, email, displayName: `${result.user.firstName} ${result.user.lastName}` })
+                await processLoginAndRedirect(
+                    { uid, email, displayName: `${result.user.firstName} ${result.user.lastName}` },
+                    result.user.role
+                )
             }
         } catch (err: any) {
             setError(err.message || "Invalid credentials")
@@ -197,6 +241,60 @@ export default function LoginPage() {
                     </CardFooter>
                 </form>
             </Card>
+
+            {/* Premium Redirect Overlay */}
+            <AnimatePresence>
+                {isRedirecting && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/90 backdrop-blur-xl"
+                    >
+                        <div className="relative flex flex-col items-center">
+                            <motion.div 
+                                animate={{ 
+                                    scale: [1, 1.1, 1],
+                                    rotate: [0, 360] 
+                                }}
+                                transition={{ 
+                                    duration: 3, 
+                                    repeat: Infinity,
+                                    ease: "easeInOut" 
+                                }}
+                                className="h-24 w-24 rounded-3xl bg-primary/20 flex items-center justify-center relative mb-8"
+                            >
+                                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+                                <Building2 className="h-10 w-10 text-primary relative z-10" />
+                            </motion.div>
+                            
+                            <motion.div
+                                key={redirectMessage}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="flex items-center gap-3"
+                            >
+                                <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                                <span className="text-xl font-bold tracking-tight text-foreground">{redirectMessage}</span>
+                            </motion.div>
+                            
+                            <div className="mt-8 w-48 h-1 bg-muted rounded-full overflow-hidden">
+                                <motion.div 
+                                    initial={{ x: "-100%" }}
+                                    animate={{ x: "100%" }}
+                                    transition={{ 
+                                        duration: 1.5, 
+                                        repeat: Infinity,
+                                        ease: "linear"
+                                    }}
+                                    className="w-full h-full bg-primary"
+                                />
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     )
 }

@@ -88,14 +88,40 @@ export class JobService {
     }
   }
 
+  static async syncJobStatuses() {
+    await connectToDatabase()
+    const now = new Date()
+    
+    // Update all Active jobs that have passed their applicationCloseDate to Closed
+    const result = await Job.updateMany(
+      { 
+        status: "Active", 
+        applicationCloseDate: { $lt: now } 
+      }, 
+      { 
+        $set: { status: "Closed" } 
+      }
+    )
+    
+    if (result.modifiedCount > 0) {
+      console.log(`Automatically closed ${result.modifiedCount} expired jobs.`)
+    }
+  }
+
   static async getJobs(filter?: any) {
     await connectToDatabase()
+    // Sync statuses before fetching
+    await this.syncJobStatuses()
+    
     const jobs = await Job.find(filter).sort({ createdAt: -1 }).lean()
     return JSON.parse(JSON.stringify(jobs))
   }
 
   static async getJobById(id: string) {
     await connectToDatabase()
+    // Sync statuses before fetching
+    await this.syncJobStatuses()
+    
     const job = await Job.findById(id).lean()
     return job ? JSON.parse(JSON.stringify(job)) : null
   }

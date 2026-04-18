@@ -4,10 +4,14 @@ import connectToDatabase from "@/lib/mongodb"
 import Job from "@/models/Job"
 import Application from "@/models/Application"
 import User from "@/models/User"
+import { JobService } from "@/services/jobService"
 
 export async function getDashboardStats() {
     try {
         await connectToDatabase()
+
+        // Sync job statuses to ensure accuracy
+        await JobService.syncJobStatuses()
 
         const [
             totalJobs,
@@ -15,7 +19,7 @@ export async function getDashboardStats() {
             interviewsScheduled,
             offersAccepted
         ] = await Promise.all([
-            Job.countDocuments({}),
+            Job.countDocuments({ status: "Active" }),
             User.countDocuments({ role: 'candidate' }),
             Application.countDocuments({ status: { $in: ['Interview', 'Interviewing', 'Interview Round'] } }),
             Application.countDocuments({ status: { $in: ['Offer', 'Hired', 'Hire'] } })

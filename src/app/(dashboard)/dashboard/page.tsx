@@ -15,10 +15,10 @@ import { getDashboardStats } from "@/app/actions/dashboardActions"
 
 export default async function Dashboard() {
     const res = await getDashboardStats()
-    const { 
-        totalJobs = 0, 
-        totalCandidates = 0, 
-        interviewsScheduled = 0, 
+    const {
+        totalJobs = 0,
+        totalCandidates = 0,
+        interviewsScheduled = 0,
         offersAccepted = 0,
         recentApplications = [],
         chartData = []

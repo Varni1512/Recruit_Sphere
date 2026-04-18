@@ -4,9 +4,9 @@ import * as React from "react"
 import { motion, type Variants, useMotionValue, useTransform, animate, useInView } from "framer-motion"
 import { useEffect, useRef, useTransition } from "react"
 import Link from "next/link"
-import { 
-    Building2, Bot, CalendarDays, ShieldCheck, Video, Zap, 
-    FileSearch, ArrowRight, CheckCircle, ChevronRight, 
+import {
+    Building2, Bot, CalendarDays, ShieldCheck, Video, Zap,
+    FileSearch, ArrowRight, CheckCircle, ChevronRight,
     Users, Check, Mail, Phone, Linkedin, ClipboardList,
     Cpu, UserCheck, Search, Briefcase, Star, Loader2
 } from "lucide-react"
@@ -29,9 +29,9 @@ const fadeUpVariants: Variants = {
     visible: (i: number = 0) => ({
         opacity: 1,
         y: 0,
-        transition: { 
-            delay: i * 0.1, 
-            duration: 0.5, 
+        transition: {
+            delay: i * 0.1,
+            duration: 0.5,
             ease: "easeOut"
         }
     })
@@ -151,13 +151,13 @@ export default function Home() {
                 <section className="relative pt-20 pb-16 md:pt-24 md:pb-16 overflow-hidden">
                     {/* Subtle grid background */}
                     <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-                    
+
                     <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 relative z-10 text-center">
                         <motion.div
                             initial="hidden"
                             animate="visible"
-                            variants={{ 
-                                visible: { transition: { staggerChildren: 0.1 } } 
+                            variants={{
+                                visible: { transition: { staggerChildren: 0.1 } }
                             }}
                             className="max-w-5xl mx-auto space-y-8"
                         >
@@ -188,9 +188,9 @@ export default function Home() {
                                 </Button>
                             </motion.div>
                         </motion.div>
-                        
+
                         {/* Abstract Hero Visual - Candidate Intelligence Dashboard */}
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, y: 40 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
@@ -356,7 +356,7 @@ export default function Home() {
                 <section id="capabilities" className="py-16 md:py-16">
                     <div className="container mx-auto px-4 md:px-6 lg:px-8">
                         <div className="max-w-3xl mb-16 text-left">
-                            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-left">Enterprise-grade hiring, <br/> orchestration handled.</h2>
+                            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-left">Enterprise-grade hiring, <br /> orchestration handled.</h2>
                             <p className="text-lg text-muted-foreground text-left leading-relaxed">
                                 Recruit Sphere operates as a high-performance hiring engine. You define the target outcomes; our machine learning workflows ensure the talent is sourced and verified.
                             </p>
@@ -402,7 +402,7 @@ export default function Home() {
                         <div className="grid md:grid-cols-3 gap-8 relative">
                             {/* Desktop Connecting Line */}
                             <div className="hidden md:block absolute top-[60px] left-1/2 -translate-x-1/2 w-[60%] h-px bg-gradient-to-r from-transparent via-border to-transparent -z-10" />
-                            
+
                             {PROCESS_STEPS.map((item, i) => (
                                 <motion.div
                                     key={i}
@@ -423,7 +423,7 @@ export default function Home() {
                                             <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 mx-auto sm:mx-0 shadow-inner group-hover:scale-110 transition-transform">
                                                 <item.icon className="h-7 w-7" />
                                             </div>
-                                            
+
                                             <h3 className="text-xl font-bold mb-3 tracking-tight">{item.title}</h3>
                                             <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
                                         </CardContent>
@@ -450,7 +450,7 @@ export default function Home() {
                                 <p className="text-lg text-muted-foreground mb-8 leading-relaxed text-left">
                                     The application process shouldn't be a black box. Our platform ensures merit-based progression, unified tracking, and zero-latency status updates.
                                 </p>
-                                
+
                                 <ul className="space-y-6">
                                     {[
                                         { title: "Status Immediacy", desc: "Receive automated AI notifications on application results—redefining candidate respect." },
@@ -592,7 +592,7 @@ export default function Home() {
                             >
                                 <Card className="bg-white/5 border-white/10 backdrop-blur-xl shadow-2xl">
                                     <CardContent className="p-8">
-                                        <form 
+                                        <form
                                             ref={formRef}
                                             action={async (formData) => {
                                                 startTransition(async () => {
@@ -629,8 +629,8 @@ export default function Home() {
                                                 <label className="text-sm font-bold text-white/60 uppercase tracking-wider">Your Message</label>
                                                 <Textarea name="message" placeholder="Tell us about your hiring needs..." required className="bg-white/5 border-white/10 text-white placeholder:text-white/20 min-h-[120px]" />
                                             </div>
-                                            <Button 
-                                                type="submit" 
+                                            <Button
+                                                type="submit"
                                                 disabled={isPending}
                                                 className="w-full h-14 text-lg font-bold shadow-xl hover:translate-y-[-2px] transition-all flex items-center justify-center gap-2"
                                             >
@@ -662,7 +662,7 @@ export default function Home() {
                             </div>
                             <span className="text-xl font-black tracking-tighter">Recruit Sphere</span>
                         </div>
-                        
+
                         <p className="text-xs text-muted-foreground/60 font-medium" suppressHydrationWarning>
                             © {new Date().getFullYear()} Recruit Sphere. All intellectual property remains with the Internal Administration.
                         </p>

@@ -3,9 +3,14 @@
 import { UserService } from "@/services/userService"
 import { revalidatePath } from "next/cache"
 
-export async function updateProfileInDb(uid: string, profileData: any) {
+import { cookies } from "next/headers"
+
+export async function updateProfileInDb(uid: string, profileData: any, newCompletion?: number) {
     try {
         await UserService.updateProfile(uid, profileData)
+        if (newCompletion !== undefined) {
+            cookies().set('profileCompletion', String(newCompletion), { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' })
+        }
         revalidatePath('/candidate/profile')
         revalidatePath('/candidate/dashboard')
         return { success: true }
@@ -38,5 +43,14 @@ export async function updateRecruiterProfileAction(email: string, profileData: a
     } catch (error: any) {
         console.error("Failed to update recruiter profile:", error)
         return { success: false, error: error.message }
+    }
+}
+
+export async function syncCompletionCookieAction(completion: number) {
+    try {
+        cookies().set('profileCompletion', String(completion), { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' })
+        return { success: true }
+    } catch (error) {
+        return { success: false }
     }
 }

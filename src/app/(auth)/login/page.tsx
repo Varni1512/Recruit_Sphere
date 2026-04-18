@@ -49,7 +49,7 @@ export default function LoginPage() {
         } catch (e) {
             console.error("Error preloading profile data", e);
         } finally {
-            router.replace("/candidate/profile");
+            router.replace("/candidate/dashboard");
         }
     }
 

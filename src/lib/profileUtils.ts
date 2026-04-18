@@ -64,7 +64,8 @@ export const getUserProfile = async (uid: string): Promise<Partial<CandidateProf
 
 export const saveUserProfile = async (uid: string, profileData: Partial<CandidateProfile>) => {
     try {
-        const dbRes = await updateProfileInDb(uid, profileData);
+        const completion = calculateProfileCompletion(profileData);
+        const dbRes = await updateProfileInDb(uid, profileData, completion);
 
         if (typeof window !== "undefined") {
             const raw = localStorage.getItem(`candidate_profile_${uid}`);

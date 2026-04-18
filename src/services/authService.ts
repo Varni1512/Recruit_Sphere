@@ -105,13 +105,36 @@ export class AuthService {
   }
 
   private static toSafeUser(user: any) {
+    const fieldsToTrack = [
+        "fullName", "email", "phone", "location",
+        "summary", "skills", "portfolio", "linkedin", "github", "photoUrl", "resumeUrl", "experiences"
+    ];
+    let filledFields = 0;
+    
+    const fullName = user.firstName || user.lastName 
+        ? `${user.firstName || ""} ${user.lastName || ""}`.trim() 
+        : "";
+        
+    const profileData = {
+        ...user.toObject(),
+        fullName
+    };
+
+    for (const field of fieldsToTrack) {
+        if (profileData[field] && (Array.isArray(profileData[field]) ? profileData[field].length > 0 : String(profileData[field]).trim() !== "")) {
+            filledFields++;
+        }
+    }
+    const profileCompletion = Math.round((filledFields / fieldsToTrack.length) * 100) || 0;
+
     return {
       uid: user._id.toString(),
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
-      photoUrl: user.photoUrl
+      photoUrl: user.photoUrl,
+      profileCompletion
     }
   }
 }

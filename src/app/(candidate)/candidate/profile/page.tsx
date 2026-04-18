@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { auth, updateProfile } from "@/lib/localAuth"
 import { getUserProfile, calculateProfileCompletion, saveUserProfile, type Experience } from "@/lib/profileUtils"
 import { uploadToCloudinary } from "@/app/actions/uploadActions"
+import { syncCompletionCookieAction } from "@/app/actions/profileActions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
     Card,
@@ -121,6 +122,7 @@ export default function CandidateProfilePage() {
                             setCompletionPercentage(completionFromCache)
                             if (completionFromCache > 0) setIsEditing(false)
                             setIsLoading(false)
+                            syncCompletionCookieAction(completionFromCache).catch(console.error)
                         }
                     }
                 }
@@ -168,6 +170,7 @@ export default function CandidateProfilePage() {
                             setCompletionPercentage(completionFromCache)
                             if (completionFromCache > 0) setIsEditing(false)
                             setIsLoading(false)
+                            syncCompletionCookieAction(completionFromCache).catch(console.error)
                         }
                     }
                 }
@@ -195,6 +198,7 @@ export default function CandidateProfilePage() {
                     const completion = calculateProfileCompletion(profile)
                     setCompletionPercentage(completion)
                     if (completion > 0) setIsEditing(false)
+                    syncCompletionCookieAction(completion).catch(console.error)
 
                     try {
                         if (typeof window !== "undefined") {

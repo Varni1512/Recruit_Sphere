@@ -29,10 +29,10 @@ export function RecentApplications({ applications }: { applications?: any[] }) {
                     <TableRow key={app.id}>
                         <TableCell>
                             <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
+                                {/* <Avatar className="h-8 w-8">
                                     <AvatarImage src={`https://avatar.vercel.sh/${app.id}.png`} alt={app.name} />
                                     <AvatarFallback>{app.avatar}</AvatarFallback>
-                                </Avatar>
+                                </Avatar> */}
                                 <div className="flex flex-col">
                                     <span className="font-medium text-sm">{app.name}</span>
                                     <span className="text-xs text-muted-foreground">{app.email}</span>

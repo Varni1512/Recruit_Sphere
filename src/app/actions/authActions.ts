@@ -12,6 +12,7 @@ export async function registerCandidateAction(data: any) {
         
         cookies().set('role', user.role, { path: '/' })
         cookies().set('uid', user.uid, { path: '/' })
+        cookies().set('profileCompletion', String(user.profileCompletion), { path: '/' })
 
         return { success: true, user }
     } catch (error: any) {
@@ -32,6 +33,7 @@ export async function loginAction(data: any) {
 
         cookies().set('role', user.role, { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' })
         cookies().set('uid', user.uid, { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' })
+        cookies().set('profileCompletion', String(user.profileCompletion), { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' })
 
         const safeUser = {
             uid: String(user.uid),

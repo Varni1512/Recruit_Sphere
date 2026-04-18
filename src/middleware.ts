@@ -3,9 +3,12 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
     const roleCookie = request.cookies.get('role')?.value
+    const profileCompletionCookie = request.cookies.get('profileCompletion')?.value
+    const profileCompletion = parseInt(profileCompletionCookie || '0', 10)
     const path = request.nextUrl.pathname
 
-    const isPublicRoute = path === '/login' || path === '/signup' || path === '/forgot-password'
+    const isAuthRoute = path === '/login' || path === '/signup' || path === '/forgot-password'
+    const isPublicPage = path === '/terms' || path === '/privacy'
     const isCandidateRoute = path === '/candidate' || path.startsWith('/candidate/')
 
     // Ignore static files, api routes, Next.js internal paths
@@ -17,22 +20,35 @@ export function middleware(request: NextRequest) {
         return NextResponse.next()
     }
 
+    if (isPublicPage) {
+        return NextResponse.next()
+    }
+
     // Role redirection logic
-    if (isPublicRoute && roleCookie) {
+    if (isAuthRoute && roleCookie) {
         if (roleCookie === 'recruiter') {
             return NextResponse.redirect(new URL('/', request.url))
         } else if (roleCookie === 'candidate') {
-            return NextResponse.redirect(new URL('/candidate/dashboard', request.url))
+            if (profileCompletion >= 80) {
+                return NextResponse.redirect(new URL('/candidate/dashboard', request.url))
+            } else {
+                return NextResponse.redirect(new URL('/candidate/profile', request.url))
+            }
         }
     }
 
-    if (!isPublicRoute && !roleCookie) {
+    if (!isAuthRoute && !roleCookie) {
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    if (!isPublicRoute && roleCookie) {
-        if (roleCookie === 'candidate' && !isCandidateRoute) {
-            return NextResponse.redirect(new URL('/candidate/dashboard', request.url))
+    if (!isAuthRoute && roleCookie) {
+        if (roleCookie === 'candidate') {
+            if (profileCompletion < 80 && path !== '/candidate/profile') {
+                return NextResponse.redirect(new URL('/candidate/profile', request.url))
+            }
+            if (profileCompletion >= 80 && !isCandidateRoute) {
+                return NextResponse.redirect(new URL('/candidate/dashboard', request.url))
+            }
         }
         if (roleCookie === 'recruiter' && isCandidateRoute) {
             return NextResponse.redirect(new URL('/', request.url))

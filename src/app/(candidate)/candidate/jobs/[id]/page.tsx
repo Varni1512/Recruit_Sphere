@@ -361,7 +361,7 @@ export default function CandidateJobDetailsPage({ params }: { params: { id: stri
                         <div className="flex items-center space-x-2 border rounded-lg p-4 bg-muted/10 mt-4">
                             <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(val) => setTermsAccepted(val as boolean)} />
                             <Label htmlFor="terms" className="text-sm font-normal cursor-pointer">
-                                I verify that all the information provided is accurate and I agree to the <Link href="#" className="underline">Terms and Conditions</Link>.
+                                I verify that all the information provided is accurate and I agree to the <Link href="/terms" target="_blank" className="underline text-primary hover:text-primary/80">Terms and Conditions</Link>.
                             </Label>
                         </div>
 

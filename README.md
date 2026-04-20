@@ -28,7 +28,7 @@ Recruit Sphere is a professional-grade, full-stack recruitment platform designed
 
 ## 🏗️ System Architecture
 
-![Recruit Sphere Architecture](public/assets/architecture.png)
+<!-- ![Recruit Sphere Architecture](public/assets/architecture.png) -->
 
 *High-level overview of the Recruit Sphere service-oriented architecture.*
 

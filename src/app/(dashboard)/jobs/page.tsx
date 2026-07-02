@@ -85,7 +85,7 @@ function JobCard({ job, onUpdate }: { job: any, onUpdate: () => void }) {
                 <div className="flex items-start justify-between">
                     <div>
                         <CardTitle className="text-xl">{job.title}</CardTitle>
-                        <CardDescription className="mt-1">{job.department}</CardDescription>
+                        <CardDescription className="mt-1">{job.company} • {job.department}</CardDescription>
                     </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

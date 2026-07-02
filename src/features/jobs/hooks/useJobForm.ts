@@ -15,6 +15,7 @@ export const useJobForm = () => {
     resolver: zodResolver(createJobSchema),
     defaultValues: {
       title: "",
+      company: "",
       department: "",
       type: "",
       locationType: "",
@@ -24,6 +25,8 @@ export const useJobForm = () => {
       description: "",
       atsKeywords: [],
       atsCriteriaScore: 75,
+      examDuration: 30,
+      aptitudeQuestions: [],
       applicationCloseDays: 3,
       hiringDeadlineDays: 15,
       hiringPipeline: [
@@ -52,7 +55,23 @@ export const useJobForm = () => {
       return
     }
 
-    const { title, description } = form.getValues()
+    const { title, description, hiringPipeline, aptitudeQuestions } = form.getValues()
+
+    const invalidRound = hiringPipeline?.find((r: any) => r.selected && r.passingScore > r.totalScore)
+    if (invalidRound) {
+      alert(`Error in ${invalidRound.roundName} round: Passing score (${invalidRound.passingScore}) cannot be greater than Total score (${invalidRound.totalScore}).`)
+      return
+    }
+
+    const aptitudeRound = hiringPipeline?.find((r: any) => r.roundName === "Aptitude" || r.roundName === "Apptitude Round")
+    if (aptitudeRound?.selected) {
+      const sumOfMarks = (aptitudeQuestions || []).reduce((sum: number, q: any) => sum + (q.marks || 1), 0)
+      if (sumOfMarks !== aptitudeRound.totalScore) {
+        alert(`Total marks in Aptitude Questions (${sumOfMarks}) must equal the Aptitude Round Total Score (${aptitudeRound.totalScore}). Please adjust the question marks or the round score.`)
+        return
+      }
+    }
+
     const extracted = extractKeywordsFromText(description || title)
     form.setValue("atsKeywords", extracted)
     setShowATSModal(true)
@@ -69,10 +88,12 @@ export const useJobForm = () => {
 
     const submissionData = {
       ...data,
-      hiringPipeline: selectedPipeline
+      hiringPipeline: selectedPipeline,
+      aptitudeQuestions: form.getValues().aptitudeQuestions || []
     }
 
     setIsSaving(true)
+    console.log("SUBMISSION DATA:", submissionData)
     try {
       const result = await createJob(submissionData)
       if (result.success) {

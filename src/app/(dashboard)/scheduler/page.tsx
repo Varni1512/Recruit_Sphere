@@ -34,62 +34,7 @@ tomorrow.setDate(tomorrow.getDate() + 1)
 const yesterday = new Date(today)
 yesterday.setDate(yesterday.getDate() - 1)
 
-const scheduledInterviews = [
-    {
-        id: "1",
-        candidate: "Alex Carter",
-        role: "Frontend Developer",
-        time: "10:00 AM - 11:00 AM",
-        type: "Technical Interview",
-        interviewer: "Jane Smith",
-        date: today.toDateString(),
-    },
-    {
-        id: "2",
-        candidate: "Sarah Jenkins",
-        role: "UX Designer",
-        time: "1:30 PM - 2:30 PM",
-        type: "Portfolio Review",
-        interviewer: "Mark Johnson",
-        date: today.toDateString(),
-    },
-    {
-        id: "3",
-        candidate: "David Kim",
-        role: "Frontend Developer",
-        time: "4:00 PM - 4:30 PM",
-        type: "Screening Call",
-        interviewer: "Alice Wang",
-        date: today.toDateString(),
-    },
-    {
-        id: "4",
-        candidate: "Emily Chen",
-        role: "Product Manager",
-        time: "9:00 AM - 10:00 AM",
-        type: "Behavioral / Culture Fit",
-        interviewer: "Sam Brooks",
-        date: tomorrow.toDateString(),
-    },
-    {
-        id: "5",
-        candidate: "Michael Rossi",
-        role: "Backend Engineer",
-        time: "2:00 PM - 3:30 PM",
-        type: "Technical Interview",
-        interviewer: "David Lee",
-        date: tomorrow.toDateString(),
-    },
-    {
-        id: "6",
-        candidate: "Jessica Alba",
-        role: "UX Designer",
-        time: "11:00 AM - 12:00 PM",
-        type: "Portfolio Review",
-        interviewer: "Mark Johnson",
-        date: yesterday.toDateString(),
-    },
-]
+const scheduledInterviews: any[] = []
 
 export default function SchedulerPage() {
     const [date, setDate] = useState<Date | undefined>(new Date())

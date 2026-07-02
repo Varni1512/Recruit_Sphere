@@ -19,6 +19,14 @@ export interface IJob extends Document {
     applicationCloseDays: number;
     hiringDeadlineDays: number;
     applicationCloseDate?: Date;
+    aptitudeQuestions?: {
+        question: string;
+        questionType: 'mcq' | 'msq' | 'text';
+        options: string[];
+        answer: any;
+        marks: number;
+    }[];
+    examDuration?: number;
     hiringPipeline: {
         roundName: string;
         totalScore: number;
@@ -51,6 +59,14 @@ const JobSchema: Schema = new Schema({
     applicationCloseDays: { type: Number, default: 7 },
     hiringDeadlineDays: { type: Number, default: 30 },
     applicationCloseDate: { type: Date },
+    aptitudeQuestions: [{
+        question: String,
+        questionType: { type: String, enum: ['mcq', 'msq', 'text'], default: 'mcq' },
+        options: [String],
+        answer: mongoose.Schema.Types.Mixed, // string or string[]
+        marks: { type: Number, default: 1 }
+    }],
+    examDuration: { type: Number, default: 30 },
     hiringPipeline: [{
         roundName: String,
         totalScore: Number,
@@ -70,6 +86,9 @@ JobSchema.index({ status: 1 });
 JobSchema.index({ createdAt: -1 }); // Optimized for "Latest first" sorting
 JobSchema.index({ department: 1 });
 
+if (process.env.NODE_ENV !== 'production') {
+  delete mongoose.models.Job;
+}
 const Job: Model<IJob> = mongoose.models.Job || mongoose.model<IJob>("Job", JobSchema);
 
 export default Job;

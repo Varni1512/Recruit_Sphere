@@ -144,8 +144,8 @@ export function Header() {
         <DropdownMenuTrigger asChild>
           <Button variant="secondary" size="icon" className="rounded-full ring-2 ring-transparent transition-all hover:ring-primary/20">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="/photo.jpg" alt="@admin" />
-              <AvatarFallback>AD</AvatarFallback>
+              <AvatarImage src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName || user?.email || 'User'}&background=random`} alt={user?.displayName || "User"} />
+              <AvatarFallback>{user?.displayName ? user.displayName.slice(0, 2).toUpperCase() : "U"}</AvatarFallback>
             </Avatar>
             <span className="sr-only">View profile</span>
           </Button>
@@ -153,9 +153,9 @@ export function Header() {
         <DropdownMenuContent align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">Admin Recruiter</p>
+              <p className="text-sm font-medium leading-none">{user?.displayName || "User"}</p>
               <p className="text-xs leading-none text-muted-foreground">
-                recruiter@example.com
+                {user?.email || ""}
               </p>
             </div>
           </DropdownMenuLabel>

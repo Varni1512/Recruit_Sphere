@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
     DndContext,
     DragOverlay,
@@ -23,9 +23,17 @@ import {
 import { KanbanColumn } from "./kanban-column"
 import { KanbanCard } from "./kanban-card"
 import { updateApplicationStatus } from "@/app/actions/jobActions"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 export type Candidate = {
     id: string
+    jobId?: string
     name: string
     role: string
     score: number
@@ -49,14 +57,43 @@ const defaultColumns: Column[] = [
     { id: "Rejected", title: "Rejected" },
 ]
 
-interface KanbanBoardProps {
-    initialCandidates: Candidate[]
+export type Job = {
+    id: string
+    title: string
+    company: string
+    pipelineStages: string[]
 }
 
-export function KanbanBoard({ initialCandidates }: KanbanBoardProps) {
-    const [columns] = useState<Column[]>(defaultColumns)
+interface KanbanBoardProps {
+    initialCandidates: Candidate[]
+    jobs?: Job[]
+}
+
+export function KanbanBoard({ initialCandidates, jobs = [] }: KanbanBoardProps) {
+    const [columns, setColumns] = useState<Column[]>(defaultColumns)
     const [candidates, setCandidates] = useState<Candidate[]>(initialCandidates)
     const [activeId, setActiveId] = useState<string | null>(null)
+    const [selectedJobId, setSelectedJobId] = useState<string>("all")
+
+    useEffect(() => {
+        if (selectedJobId === "all") {
+            setColumns(defaultColumns)
+        } else {
+            const job = jobs.find(j => j.id === selectedJobId)
+            if (job) {
+                const dynamicCols = [
+                    { id: "Applied", title: "Applied" },
+                    { id: "Shortlisted", title: "Shortlisted" },
+                    ...job.pipelineStages.map(stage => ({ id: stage, title: stage })),
+                    { id: "Hire", title: "Hire" },
+                    { id: "Rejected", title: "Rejected" },
+                ]
+                setColumns(dynamicCols)
+            } else {
+                setColumns(defaultColumns)
+            }
+        }
+    }, [selectedJobId, jobs])
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -70,39 +107,59 @@ export function KanbanBoard({ initialCandidates }: KanbanBoardProps) {
     )
 
     const activeCandidate = candidates.find((c) => c.id === activeId)
+    const displayedCandidates = selectedJobId === "all" ? candidates : candidates.filter(c => c.jobId === selectedJobId)
 
     return (
-        <div className="flex h-full w-full gap-4 overflow-x-auto pb-4">
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCorners}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragEnd={handleDragEnd}
-            >
-                {columns.map((col) => {
-                    const columnCandidates = candidates.filter((c) => c.status === col.id)
-                    return (
-                        <KanbanColumn key={col.id} column={col} count={columnCandidates.length}>
-                            <SortableContext
-                                id={col.id}
-                                items={columnCandidates.map((c) => c.id)}
-                                strategy={verticalListSortingStrategy}
-                            >
-                                <div className="flex flex-col gap-3 min-h-[150px]">
-                                    {columnCandidates.map((candidate) => (
-                                        <KanbanCard key={candidate.id} candidate={candidate} />
-                                    ))}
-                                </div>
-                            </SortableContext>
-                        </KanbanColumn>
-                    )
-                })}
-
-                <DragOverlay>
-                    {activeCandidate ? <KanbanCard candidate={activeCandidate} isOverlay /> : null}
-                </DragOverlay>
-            </DndContext>
+        <div className="flex flex-col h-full w-full gap-4">
+            {jobs.length > 0 && (
+                <div className="w-full max-w-sm mb-2">
+                    <Select value={selectedJobId} onValueChange={setSelectedJobId}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Filter by Job" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Jobs</SelectItem>
+                            {jobs.map(job => (
+                                <SelectItem key={job.id} value={job.id}>
+                                    {job.company} - {job.title}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+            
+            <div className="flex h-full w-full gap-4 overflow-x-auto pb-4">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCorners}
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDragEnd={handleDragEnd}
+                >
+                    {columns.map((col) => {
+                        const columnCandidates = displayedCandidates.filter((c) => c.status === col.id)
+                        return (
+                            <KanbanColumn key={col.id} column={col} count={columnCandidates.length}>
+                                <SortableContext
+                                    id={col.id}
+                                    items={columnCandidates.map((c) => c.id)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    <div className="flex flex-col gap-3 min-h-[150px]">
+                                        {columnCandidates.map((candidate) => (
+                                            <KanbanCard key={candidate.id} candidate={candidate} />
+                                        ))}
+                                    </div>
+                                </SortableContext>
+                            </KanbanColumn>
+                        )
+                    })}
+                    <DragOverlay>
+                        {activeCandidate ? <KanbanCard candidate={activeCandidate} /> : null}
+                    </DragOverlay>
+                </DndContext>
+            </div>
         </div>
     )
 

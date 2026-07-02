@@ -21,32 +21,7 @@ const today = new Date()
 const tomorrow = addDays(today, 1)
 const inThreeDays = addDays(today, 3)
 
-const upcomingInterviews = [
-    {
-        id: "1",
-        company: "Stark Industries",
-        role: "Frontend Engineer",
-        date: tomorrow,
-        time: "10:00 AM - 11:00 AM",
-        interviewer: "Tony S. & Pepper P.",
-        type: "Technical Assessment",
-        location: "Google Meet",
-        status: "Confirmed",
-        link: "https://meet.google.com/abc-defg-hij"
-    },
-    {
-        id: "2",
-        company: "Wayne Enterprises",
-        role: "React Developer",
-        date: inThreeDays,
-        time: "2:30 PM - 3:15 PM",
-        interviewer: "Bruce W.",
-        type: "Culture Fit",
-        location: "Zoom",
-        status: "Pending Details",
-        link: null
-    }
-]
+const upcomingInterviews: any[] = []
 
 export default function CandidateInterviewsPage() {
     const [date, setDate] = useState<Date | undefined>(today)

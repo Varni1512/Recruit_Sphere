@@ -29,7 +29,6 @@ export class JobService {
 
     const newJob = new Job({
       ...data,
-      company: "Recruit Sphere",
       tags,
       applicationCloseDate,
       deadline: deadlineDate,

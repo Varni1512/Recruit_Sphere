@@ -1,17 +1,29 @@
 import { KanbanBoard } from "@/components/pipeline/kanban-board"
-import { getAllApplications } from "@/app/actions/jobActions"
+import { getAllApplications, getAllJobs } from "@/app/actions/jobActions"
 
 export default async function PipelinePage() {
-    const res = await getAllApplications()
-    const candidates = res.success ? res.applications : []
+    const [appsRes, jobsRes] = await Promise.all([
+        getAllApplications(true), // Only active candidates
+        getAllJobs()
+    ])
+    const candidates = appsRes.success ? appsRes.applications : []
+    const jobs = jobsRes.success ? (jobsRes.jobs || []) : []
 
     const formattedCandidates = candidates.map((app: any) => ({
         id: app.id,
+        jobId: app.jobId,
         name: app.name,
         role: app.role,
-        score: app.score,
+        score: app.resumeScore, // Just for Kanban display
         status: app.status,
         photoUrl: app.photoUrl,
+    }))
+
+    const formattedJobs = jobs.map((j: any) => ({
+        id: j._id || j.id,
+        title: j.title,
+        company: j.company || "Recruit Sphere",
+        pipelineStages: j.hiringPipeline?.map((r: any) => r.roundName) || []
     }))
 
     return (
@@ -25,7 +37,7 @@ export default async function PipelinePage() {
                 </div>
             </div>
             <div className="flex-1 overflow-hidden">
-                <KanbanBoard initialCandidates={formattedCandidates} />
+                <KanbanBoard initialCandidates={formattedCandidates} jobs={formattedJobs} />
             </div>
         </div>
     )

@@ -19,6 +19,16 @@ export interface IApplication extends Document {
     qualifications: string;
     gender: string;
     resumeScore: number;
+    aptitudeScore: number;
+    codingScore: number;
+    aiInterviewScore: number;
+    technicalInterviewScore: number;
+    finalInterviewScore: number;
+    proctoringLogs?: {
+        timestamp: Date;
+        type: string;
+        message: string;
+    }[];
     status: string; // "Pending", "Reviewed", "Rejected", "Accepted"
     rejectionReason?: string;
     createdAt: Date;
@@ -43,6 +53,16 @@ const ApplicationSchema: Schema = new Schema({
     qualifications: { type: String, required: true },
     gender: { type: String, required: true },
     resumeScore: { type: Number, default: 0 },
+    aptitudeScore: { type: Number, default: 0 },
+    codingScore: { type: Number, default: 0 },
+    aiInterviewScore: { type: Number, default: 0 },
+    technicalInterviewScore: { type: Number, default: 0 },
+    finalInterviewScore: { type: Number, default: 0 },
+    proctoringLogs: [{
+        timestamp: { type: Date, default: Date.now },
+        type: String,
+        message: String
+    }],
     status: { type: String, default: "Applied", enum: ["Applied", "Pending", "Reviewed", "Rejected", "Accepted", "Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"] },
     rejectionReason: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now }
@@ -55,6 +75,9 @@ ApplicationSchema.index({ status: 1 });
 ApplicationSchema.index({ createdAt: -1 });
 ApplicationSchema.index({ resumeScore: -1 }); // Fast sorting of top candidates
 
+if (process.env.NODE_ENV !== 'production') {
+  delete mongoose.models.Application;
+}
 const Application: Model<IApplication> = mongoose.models.Application || mongoose.model<IApplication>("Application", ApplicationSchema);
 
 export default Application;

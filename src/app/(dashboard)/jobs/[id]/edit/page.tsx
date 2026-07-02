@@ -7,6 +7,8 @@ import { useState, useEffect } from "react"
 import { getJobById, updateJob } from "@/app/actions/jobActions"
 import dynamic from 'next/dynamic'
 import { Badge } from "@/components/ui/badge"
+import { useForm } from "react-hook-form"
+import { PipelineConfig } from "@/features/jobs/components/PipelineConfig"
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 import { Button } from "@/components/ui/button"
@@ -48,6 +50,14 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
     const [isSaving, setIsSaving] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
 
+    const form = useForm({
+        defaultValues: {
+            examDuration: 30,
+            aptitudeQuestions: [],
+            hiringPipeline: []
+        }
+    })
+
     const addKeyword = () => {
         if (newKeyword.trim() && !atsKeywords.includes(newKeyword.trim())) {
             setAtsKeywords([...atsKeywords, newKeyword.trim()])
@@ -70,6 +80,12 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                     setDescription(res.job.description)
                     setAtsKeywords(res.job.atsKeywords || [])
                     setAtsCriteriaScore(res.job.atsCriteriaScore || 75)
+                    
+                    form.reset({
+                        examDuration: (res.job as any).examDuration || 30,
+                        aptitudeQuestions: (res.job as any).aptitudeQuestions || [],
+                        hiringPipeline: (res.job as any).hiringPipeline || []
+                    })
                 }
                 setIsLoading(false)
             }
@@ -78,24 +94,46 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
     }, [id])
 
     const handleSave = async () => {
+        const pipeline = form.getValues("hiringPipeline") as any[];
+        const invalidRound = pipeline?.find((r: any) => r.selected && r.passingScore > r.totalScore)
+        
+        if (invalidRound) {
+            alert(`Error in ${invalidRound.roundName} round: Passing score (${invalidRound.passingScore}) cannot be greater than Total score (${invalidRound.totalScore}).`)
+            return
+        }
+        
+        const aptitudeQuestions = form.getValues("aptitudeQuestions")
+        const aptitudeRound = pipeline?.find((r: any) => r.roundName === "Aptitude" || r.roundName === "Apptitude Round")
+        if (aptitudeRound?.selected) {
+            const sumOfMarks = (aptitudeQuestions || []).reduce((sum: number, q: any) => sum + (q.marks || 1), 0)
+            if (sumOfMarks !== aptitudeRound.totalScore) {
+                alert(`Total marks in Aptitude Questions (${sumOfMarks}) must equal the Aptitude Round Total Score (${aptitudeRound.totalScore}). Please adjust the question marks or the round score.`)
+                return
+            }
+        }
+
         setIsSaving(true)
+        const updatedData = {
+            title,
+            department,
+            type,
+            locationType,
+            location,
+            experience,
+            salary,
+            description,
+            atsKeywords,
+            atsCriteriaScore,
+            examDuration: form.getValues("examDuration"),
+            aptitudeQuestions,
+            hiringPipeline: pipeline
+        }
         try {
-            const result = await updateJob(id, {
-                title,
-                department,
-                type,
-                locationType,
-                location,
-                experience,
-                salary,
-                description,
-                atsKeywords,
-                atsCriteriaScore
-            })
+            const result = await updateJob(id, updatedData)
             if (result.success) {
                 router.push(`/jobs/${id}`)
             } else {
-                alert("Failed to update job: " + result.error)
+                alert("Failed to update job")
             }
         } catch (error) {
             console.error(error)
@@ -272,6 +310,10 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                         />
                         <p className="text-xs text-muted-foreground">Candidates must meet or exceed this percentage score to automatically bypass the Applied stage.</p>
                     </div>
+
+                    <Separator className="my-4" />
+                    
+                    <PipelineConfig form={form} />
 
                 </CardContent>
                 <CardFooter className="flex justify-end gap-4 border-t px-6 py-4">

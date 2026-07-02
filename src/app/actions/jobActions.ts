@@ -15,14 +15,22 @@ import { calculateATSScore } from "@/lib/atsScoring"
 
 const capitalize = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
+import fs from "fs"
+
 export async function createJob(data: any) {
     try {
         const payload = data instanceof FormData ? Object.fromEntries(data.entries()) : data
         const validatedData = createJobSchema.parse(payload)
+        console.log("VALIDATED DATA Qs:", JSON.stringify(validatedData.aptitudeQuestions))
+
         const newJob = await JobService.createJob(validatedData)
+        const jobId = (newJob as any)._id.toString()
+
 
         revalidatePath('/jobs')
         revalidatePath('/candidate/jobs')
+        revalidatePath('/candidates')
+        revalidatePath('/pipeline')
         
         return { success: true, jobId: (newJob as any)._id.toString() }
     } catch (error: any) {
@@ -49,7 +57,7 @@ export async function getAllJobs(filterStatus?: string) {
             jobs: jobs.map((job: any) => ({
                 id: job._id.toString(),
                 title: job.title,
-                company: job.company === "Acme Corp" ? "Recruit Sphere" : (job.company || "Recruit Sphere"),
+                company: job.company || "Recruit Sphere",
                 department: capitalize(job.department),
                 location: job.location,
                 locationType: job.locationType,
@@ -61,7 +69,8 @@ export async function getAllJobs(filterStatus?: string) {
                 tags: (job.tags || []).map((tag: string) => capitalize(tag)),
                 description: job.description,
                 status: job.status,
-                candidates: job.candidatesCount || 0
+                candidates: job.candidatesCount || 0,
+                hiringPipeline: job.hiringPipeline || []
             }))
         }
     } catch (error: any) {
@@ -80,7 +89,7 @@ export async function getJobById(id: string) {
              job: {
                 id: job._id.toString(),
                 title: job.title,
-                company: job.company === "Acme Corp" ? "Recruit Sphere" : (job.company || "Recruit Sphere"),
+                company: job.company || "Recruit Sphere",
                 department: capitalize(job.department),
                 location: job.location,
                 locationType: job.locationType,
@@ -93,6 +102,8 @@ export async function getJobById(id: string) {
                 description: job.description,
                 atsKeywords: job.atsKeywords || [],
                 atsCriteriaScore: job.atsCriteriaScore || 75,
+                aptitudeQuestions: job.aptitudeQuestions || [],
+                examDuration: job.examDuration || 30,
                 status: job.status,
                 candidates: job.candidatesCount,
                 roundSchedule: (job.roundSchedule || []).map((rs: any) => ({
@@ -113,6 +124,8 @@ export async function updateJobStatus(id: string, status: string) {
         await Job.findByIdAndUpdate(id, { status })
         revalidatePath('/jobs')
         revalidatePath('/candidate/jobs')
+        revalidatePath('/candidates')
+        revalidatePath('/pipeline')
         return { success: true }
     } catch (error: any) {
         return { success: false, error: error.message }
@@ -125,6 +138,8 @@ export async function deleteJob(id: string) {
         await Job.findByIdAndDelete(id)
         revalidatePath('/jobs')
         revalidatePath('/candidate/jobs')
+        revalidatePath('/candidates')
+        revalidatePath('/pipeline')
         return { success: true }
     } catch (error: any) {
         return { success: false, error: error.message }
@@ -331,10 +346,14 @@ export async function applyToJob(data: any) {
     }
 }
 
-export async function getAllApplications() {
+export async function getAllApplications(activeOnly: boolean = false) {
     try {
         await connectToDatabase()
-        const apps = await Application.find().sort({ createdAt: -1 }).lean()
+        const query: any = { status: { $ne: 'Withdrawn' } }
+        if (activeOnly) {
+            query.status = { $nin: ['Withdrawn', 'Rejected', 'Hire', 'Accepted'] }
+        }
+        const apps = await Application.find(query).sort({ createdAt: -1 }).lean()
         
         // Fetch corresponding jobs
         const jobs = await Job.find({ _id: { $in: apps.map(a => a.jobId) } }).lean()
@@ -366,7 +385,12 @@ export async function getAllApplications() {
                  mobile: app.mobile,
                  location: app.address || "Unknown",
                  status: app.status || "Applied",
-                 score: typeof app.resumeScore === 'number' ? app.resumeScore : Math.floor(60 + (parseInt(app._id.toString().slice(-6), 16) % 30)),
+                 resumeScore: typeof app.resumeScore === 'number' ? app.resumeScore : 0,
+                 aptitudeScore: typeof app.aptitudeScore === 'number' ? app.aptitudeScore : 0,
+                 codingScore: typeof app.codingScore === 'number' ? app.codingScore : 0,
+                 aiInterviewScore: typeof app.aiInterviewScore === 'number' ? app.aiInterviewScore : 0,
+                 technicalInterviewScore: typeof app.technicalInterviewScore === 'number' ? app.technicalInterviewScore : 0,
+                 finalInterviewScore: typeof app.finalInterviewScore === 'number' ? app.finalInterviewScore : 0,
                  collegeYear: app.collegeYear,
                 collegeBranch: app.collegeBranch,
                 qualifications: app.qualifications,
@@ -387,7 +411,7 @@ export async function getAllApplications() {
 export async function getCandidateApplications(candidateId: string) {
     try {
         await connectToDatabase()
-        const apps = await Application.find({ candidateId }).sort({ createdAt: -1 }).lean()
+        const apps = await Application.find({ candidateId, status: { $ne: 'Withdrawn' } }).sort({ createdAt: -1 }).lean()
         
         // Fetch corresponding jobs
         const jobs = await Job.find({ _id: { $in: apps.map(a => a.jobId) } }).lean()
@@ -444,19 +468,19 @@ export async function updateApplicationStatus(id: string, status: string) {
             switch(status) {
                 case 'Shortlisted':
                     type = 'SHORTLISTED'
-                    message = `Congratulations ${app.firstName}! You have been shortlisted for the '${job?.title}' position at Recruit Sphere. Please check your dashboard to view the upcoming round schedule.`
+                    message = `Congratulations ${app.firstName}! You have been shortlisted for the '${job?.title}' position at Recruit Sphere. Further details regarding the next steps will be communicated soon.`
                     break;
                 case 'Coding Round':
-                    message = `Dear ${app.firstName}, you have been invited to the Coding Round for '${job?.title}'. Please log in to the platform to start your assessment at the scheduled time.`
+                    message = `Dear ${app.firstName}, you have been selected for the Coding Round for '${job?.title}'. Further details will be communicated soon.`
                     break;
                 case 'Apptitude Round':
-                    message = `Dear ${app.firstName}, your application for '${job?.title}' has moved to the Aptitude Round. Get ready for the next stage!`
+                    message = `Dear ${app.firstName}, you have been selected for the Aptitude Round for '${job?.title}'. Further details will be communicated soon.`
                     break;
                 case 'AI Interview Round':
-                    message = `Hello ${app.firstName}, you have been selected for the AI Interview Round for '${job?.title}'. This automated session will evaluate your technical and soft skills.`
+                    message = `Hello ${app.firstName}, you have been selected for the AI Interview Round for '${job?.title}'. Further details will be communicated soon.`
                     break;
                 case 'Interview Round':
-                    message = `Great news ${app.firstName}! You have been scheduled for a Technical Interview for the '${job?.title}' role. A calendar invite will follow shortly.`
+                    message = `Great news ${app.firstName}! You have been selected for the Interview Round for the '${job?.title}' role. Further details will be communicated soon.`
                     break;
                 case 'Hire':
                 case 'Offer':

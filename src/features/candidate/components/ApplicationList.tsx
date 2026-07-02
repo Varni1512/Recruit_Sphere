@@ -13,7 +13,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { updateApplicationStatusAction } from "@/app/actions/applicationActions"
+import { withdrawApplication } from "@/app/actions/jobActions"
 
 interface ApplicationListProps {
     initialApplications: any[]
@@ -25,7 +25,7 @@ export function ApplicationList({ initialApplications }: ApplicationListProps) {
     const handleWithdraw = async (appId: string) => {
         const confirmed = window.confirm("Are you sure you want to withdraw this application? This action cannot be undone.")
         if (confirmed) {
-            const res = await updateApplicationStatusAction(appId, "Withdrawn")
+            const res = await withdrawApplication(appId)
             if (res.success) {
                 setMyApplications(prev => prev.filter(a => a.id !== appId))
             } else {

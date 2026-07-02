@@ -23,14 +23,25 @@ export const JobDetailsForm = ({ form }: JobDetailsFormProps) => {
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-2">
-          <Label htmlFor="title">Job Title</Label>
-          <Input 
-            id="title" 
-            placeholder="e.g. Senior Product Designer" 
-            {...register("title")} 
-          />
-          {errors.title && <span className="text-xs text-destructive">{errors.title.message as any}</span>}
+      <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-2">
+              <Label htmlFor="title">Job Title</Label>
+              <Input 
+                id="title" 
+                placeholder="e.g. Senior Product Designer" 
+                {...register("title")} 
+              />
+              {errors.title && <span className="text-xs text-destructive">{errors.title.message as any}</span>}
+          </div>
+          <div className="grid gap-2">
+              <Label htmlFor="company">Company Name</Label>
+              <Input 
+                id="company" 
+                placeholder="e.g. Recruit Sphere" 
+                {...register("company")} 
+              />
+              {errors.company && <span className="text-xs text-destructive">{errors.company.message as any}</span>}
+          </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

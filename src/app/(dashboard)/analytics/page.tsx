@@ -12,13 +12,7 @@ import {
 import { FunnelChart } from "@/components/analytics/funnel-chart"
 import { TimeToHireChart } from "@/components/analytics/time-to-hire-chart"
 
-const topSources = [
-    { name: "LinkedIn", count: 856, rate: "45%", trend: "up" },
-    { name: "Company Career Page", count: 432, rate: "25%", trend: "up" },
-    { name: "Referrals", count: 215, rate: "15%", trend: "down" },
-    { name: "Indeed", count: 180, rate: "10%", trend: "down" },
-    { name: "Other Job Boards", count: 85, rate: "5%", trend: "up" },
-]
+const topSources: any[] = []
 
 export default function AnalyticsPage() {
     return (

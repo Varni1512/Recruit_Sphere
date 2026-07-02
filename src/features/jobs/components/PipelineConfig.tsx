@@ -3,8 +3,11 @@ import { CreateJobInput } from "@/shared/schemas/jobSchema"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { Settings } from "lucide-react"
 import { useState } from "react"
+import { AptitudeConfigModal } from "./AptitudeConfigModal"
 
 interface PipelineConfigProps {
   form: UseFormReturn<any>
@@ -15,6 +18,8 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
     control: form.control,
     name: "hiringPipeline",
   })
+  
+  const [showAptitudeModal, setShowAptitudeModal] = useState(false)
 
   // We need to keep track of "selection" separately if we want to toggle them in the UI
   // But in RHF, we can just filter them on submit. 
@@ -31,6 +36,7 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {fields.map((field: any, index: number) => {
           const isSelected = form.watch(`hiringPipeline.${index}.selected`);
+          const isAptitude = field.roundName === "Aptitude" || field.roundName === "Apptitude Round";
           
           return (
             <div 
@@ -59,6 +65,18 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
                     </Label>
                   </div>
                 </div>
+                {isAptitude && isSelected && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-7 text-xs bg-background"
+                    onClick={() => setShowAptitudeModal(true)}
+                  >
+                    <Settings className="w-3 h-3 mr-1" />
+                    Configure
+                  </Button>
+                )}
               </div>
               
               <div className="grid grid-cols-2 gap-3 mt-3">
@@ -75,16 +93,32 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
                   <Label className="text-xs text-muted-foreground">Passing Score</Label>
                   <Input 
                     type="number" 
-                    className="h-8 text-sm text-primary font-medium"
+                    className={`h-8 text-sm font-medium ${
+                      isSelected && form.watch(`hiringPipeline.${index}.passingScore`) > form.watch(`hiringPipeline.${index}.totalScore`) 
+                        ? "border-destructive text-destructive focus-visible:ring-destructive" 
+                        : "text-primary"
+                    }`}
                     disabled={!isSelected}
                     {...form.register(`hiringPipeline.${index}.passingScore`, { valueAsNumber: true })} 
                   />
                 </div>
               </div>
+              {isSelected && form.watch(`hiringPipeline.${index}.passingScore`) > form.watch(`hiringPipeline.${index}.totalScore`) && (
+                <p className="text-xs text-destructive mt-2 flex items-center">
+                  <span className="bg-destructive/10 p-0.5 rounded mr-1.5">⚠️</span> 
+                  Passing score cannot be greater than total score.
+                </p>
+              )}
             </div>
           );
         })}
       </div>
+
+      <AptitudeConfigModal 
+        form={form} 
+        open={showAptitudeModal} 
+        onOpenChange={setShowAptitudeModal} 
+      />
     </div>
   )
 }

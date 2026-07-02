@@ -133,3 +133,120 @@ export function getRecruitmentEmailTemplate({
 </html>
     `;
 }
+
+export function getReminderEmailTemplate({
+    candidateName,
+    role,
+    roundName,
+    examLink,
+    scheduledTime
+}: {
+    candidateName: string;
+    role: string;
+    roundName: string;
+    examLink: string;
+    scheduledTime: string;
+}) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                
+                <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                    <tr>
+                        <td style="height: 4px; background-color: #f59e0b;"></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 32px 40px 24px 40px; border-bottom: 1px solid #f3f4f6;">
+                            <div style="font-size: 22px; font-weight: 800; color: #111827; letter-spacing: -0.5px;">
+                                <span style="color: #f59e0b;">Recruit</span>Sphere
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 36px 40px;">
+                            <h2 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111827;">Action Required: Upcoming Exam</h2>
+                            <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #374151;">
+                                Hi <strong>${candidateName}</strong>,
+                            </p>
+                            <p style="margin: 0 0 32px 0; font-size: 15px; line-height: 1.6; color: #374151;">
+                                This is a reminder that your <strong>${roundName}</strong> for the <strong>${role}</strong> role is scheduled for <strong>${scheduledTime}</strong>.
+                            </p>
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 32px;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="${examLink}" 
+                                           style="display: inline-block; background-color: #f59e0b; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; letter-spacing: 0.2px;">
+                                           Access Exam Portal
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+    `;
+}
+
+export function getExamCompletionTemplate({
+    candidateName,
+    role
+}: {
+    candidateName: string;
+    role: string;
+}) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                
+                <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                    <tr>
+                        <td style="height: 4px; background-color: #10b981;"></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 32px 40px 24px 40px; border-bottom: 1px solid #f3f4f6;">
+                            <div style="font-size: 22px; font-weight: 800; color: #111827; letter-spacing: -0.5px;">
+                                <span style="color: #10b981;">Recruit</span>Sphere
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 36px 40px;">
+                            <h2 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111827;">Exam Completed Successfully</h2>
+                            <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #374151;">
+                                Hi <strong>${candidateName}</strong>,
+                            </p>
+                            <p style="margin: 0 0 32px 0; font-size: 15px; line-height: 1.6; color: #374151;">
+                                Thank you for taking the assessment for the <strong>${role}</strong> role. We have successfully received your submission.
+                            </p>
+                            <p style="margin: 0 0 32px 0; font-size: 15px; line-height: 1.6; color: #374151;">
+                                Our system is currently reviewing your results. If you have qualified for the next round, you will receive an update email with further details shortly.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+    `;
+}

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import connectToDatabase from '@/lib/mongodb';
 import Job from '@/models/Job';
 import Application from '@/models/Application';

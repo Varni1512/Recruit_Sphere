@@ -122,8 +122,8 @@ export async function generateDummyTest(email: string) {
 
         // 4. Send Emails
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
-        const aptitudeLink = `${baseUrl}/exam/${dummyJob._id}`
-        const codingLink = `${baseUrl}/coding-exam/${dummyJob._id}`
+        const aptitudeLink = `${baseUrl}/exam/${application._id}`
+        const codingLink = `${baseUrl}/coding-exam/${application._id}`
 
         await sendEmail({
             to: email,

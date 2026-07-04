@@ -1,32 +1,22 @@
-import { getJobById, getAllApplications } from "@/app/actions/jobActions"
+import { getJobById } from "@/app/actions/jobActions"
 import { CodingExamPortalClient } from "@/features/exam/components/CodingExamPortalClient"
+import connectToDatabase from "@/lib/mongodb"
+import Application from "@/models/Application"
 
 export default async function CodingExamPortalPage({ params }: { params: { id: string } }) {
-  const { id: jobId } = params
+  const { id: applicationId } = params
 
-  // 1. Fetch Job
-  const jobRes = await getJobById(jobId)
-  if (!jobRes.success || !jobRes.job) {
-    return <div className="p-10 text-center text-xl font-bold">Job Not Found</div>
-  }
-
-  // 2. Mocking user session / Fetching Application
-  // In a real scenario, you'd get candidateId from session (e.g. NextAuth)
-  // For this demo, we'll fetch all applications and find one for this job that belongs to the "current user"
-  // (Assuming we just pick the first one that is in "Coding Round" for this job to simulate)
-  const appsRes = await getAllApplications()
-  let application = null
-  if (appsRes.success) {
-    application = appsRes.applications.find((app: any) => app.jobId === jobId)
-  }
+  await connectToDatabase()
+  const application: any = await Application.findById(applicationId).lean()
 
   if (!application) {
-    // If no application exists, allow testing mode
-    application = {
-      _id: "test-application-id",
-      status: "Coding Round",
-      jobId: jobId,
-    }
+    return <div className="p-10 text-center text-xl font-bold">Application Not Found or Invalid Link</div>
+  }
+
+  // 1. Fetch Job
+  const jobRes = await getJobById(application.jobId.toString())
+  if (!jobRes.success || !jobRes.job) {
+    return <div className="p-10 text-center text-xl font-bold">Job Not Found</div>
   }
 
   if (application.status !== "Coding Round" && application.status !== "Applied") {

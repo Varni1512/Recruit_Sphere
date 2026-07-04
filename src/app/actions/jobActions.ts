@@ -492,10 +492,10 @@ export async function updateApplicationStatus(id: string, status: string) {
                     message = `Congratulations ${app.firstName}! You have been shortlisted for the '${job?.title}' position at Recruit Sphere. Further details regarding the next steps will be communicated soon.`
                     break;
                 case 'Coding Round':
-                    message = `Dear ${app.firstName}, you have been selected for the Coding Round for '${job?.title}'.<br><br>Please <a href="${baseUrl}/coding-exam/${job?._id}" style="color: #2563eb; font-weight: bold; text-decoration: underline;">click here</a> to start your coding assessment. Ensure you have a stable internet connection, a working camera, and a microphone.`
+                    message = `Dear ${app.firstName}, you have been selected for the Coding Round for '${job?.title}'.<br><br>Please <a href="${baseUrl}/coding-exam/${app._id}" style="color: #2563eb; font-weight: bold; text-decoration: underline;">click here</a> to start your coding assessment. Ensure you have a stable internet connection, a working camera, and a microphone.`
                     break;
                 case 'Apptitude Round':
-                    message = `Dear ${app.firstName}, you have been selected for the Aptitude Round for '${job?.title}'.<br><br>Please <a href="${baseUrl}/exam/${job?._id}" style="color: #2563eb; font-weight: bold; text-decoration: underline;">click here</a> to start your aptitude assessment. Ensure you have a stable internet connection.`
+                    message = `Dear ${app.firstName}, you have been selected for the Aptitude Round for '${job?.title}'.<br><br>Please <a href="${baseUrl}/exam/${app._id}" style="color: #2563eb; font-weight: bold; text-decoration: underline;">click here</a> to start your aptitude assessment. Ensure you have a stable internet connection.`
                     break;
                 case 'AI Interview Round':
                     message = `Hello ${app.firstName}, you have been selected for the AI Interview Round for '${job?.title}'. Further details will be communicated soon.`

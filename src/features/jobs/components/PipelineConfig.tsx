@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import { Settings } from "lucide-react"
 import { useState } from "react"
 import { AptitudeConfigModal } from "./AptitudeConfigModal"
+import { CodingConfigModal } from "./CodingConfigModal"
 
 interface PipelineConfigProps {
   form: UseFormReturn<any>
@@ -20,6 +21,7 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
   })
   
   const [showAptitudeModal, setShowAptitudeModal] = useState(false)
+  const [showCodingModal, setShowCodingModal] = useState(false)
 
   // We need to keep track of "selection" separately if we want to toggle them in the UI
   // But in RHF, we can just filter them on submit. 
@@ -37,6 +39,7 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
         {fields.map((field: any, index: number) => {
           const isSelected = form.watch(`hiringPipeline.${index}.selected`);
           const isAptitude = field.roundName === "Aptitude" || field.roundName === "Apptitude Round";
+          const isCoding = field.roundName === "Coding" || field.roundName === "Coding Round";
           
           return (
             <div 
@@ -72,6 +75,18 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
                     size="sm" 
                     className="h-7 text-xs bg-background"
                     onClick={() => setShowAptitudeModal(true)}
+                  >
+                    <Settings className="w-3 h-3 mr-1" />
+                    Configure
+                  </Button>
+                )}
+                {isCoding && isSelected && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-7 text-xs bg-background"
+                    onClick={() => setShowCodingModal(true)}
                   >
                     <Settings className="w-3 h-3 mr-1" />
                     Configure
@@ -118,6 +133,11 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
         form={form} 
         open={showAptitudeModal} 
         onOpenChange={setShowAptitudeModal} 
+      />
+      <CodingConfigModal 
+        form={form} 
+        open={showCodingModal} 
+        onOpenChange={setShowCodingModal} 
       />
     </div>
   )

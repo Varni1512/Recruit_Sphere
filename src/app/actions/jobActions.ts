@@ -12,6 +12,7 @@ import { getRecruitmentEmailTemplate } from "@/lib/emailTemplates"
 import { JobService } from "@/services/jobService"
 import { createJobSchema } from "@/shared/schemas/jobSchema"
 import { calculateATSScore } from "@/lib/atsScoring"
+import { GoogleGenAI } from "@google/genai"
 
 const capitalize = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
@@ -26,6 +27,21 @@ export async function createJob(data: any) {
         const newJob = await JobService.createJob(validatedData)
         const jobId = (newJob as any)._id.toString()
 
+        // TEST EMAIL TRIGGER FOR CODING ROUND
+        if (validatedData.codingQuestions && validatedData.codingQuestions.length > 0) {
+            const emailHtml = getRecruitmentEmailTemplate({
+                candidateName: "Test Candidate",
+                role: validatedData.title,
+                status: "Coding Round",
+                message: `Dear Test Candidate, you have been selected for the Coding Round for '${validatedData.title}'.<br><br>Please <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/coding-exam/${jobId}" style="color: #2563eb; font-weight: bold; text-decoration: underline;">click here</a> to start your coding assessment.`
+            })
+
+            await sendEmail({
+                to: "varni1505@gmail.com",
+                subject: `Application Update: Coding Round for ${validatedData.title}`,
+                html: emailHtml
+            })
+        }
 
         revalidatePath('/jobs')
         revalidatePath('/candidate/jobs')
@@ -103,6 +119,9 @@ export async function getJobById(id: string) {
                 atsKeywords: job.atsKeywords || [],
                 atsCriteriaScore: job.atsCriteriaScore || 75,
                 aptitudeQuestions: job.aptitudeQuestions || [],
+                codingQuestions: job.codingQuestions || [],
+                codingExamDuration: job.codingExamDuration || 90,
+                codingQuestionsPerCandidate: job.codingQuestionsPerCandidate || 2,
                 examDuration: job.examDuration || 30,
                 status: job.status,
                 candidates: job.candidatesCount,
@@ -471,10 +490,10 @@ export async function updateApplicationStatus(id: string, status: string) {
                     message = `Congratulations ${app.firstName}! You have been shortlisted for the '${job?.title}' position at Recruit Sphere. Further details regarding the next steps will be communicated soon.`
                     break;
                 case 'Coding Round':
-                    message = `Dear ${app.firstName}, you have been selected for the Coding Round for '${job?.title}'. Further details will be communicated soon.`
+                    message = `Dear ${app.firstName}, you have been selected for the Coding Round for '${job?.title}'.<br><br>Please <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/coding-exam/${job?._id}" style="color: #2563eb; font-weight: bold; text-decoration: underline;">click here</a> to start your coding assessment. Ensure you have a stable internet connection, a working camera, and a microphone.`
                     break;
                 case 'Apptitude Round':
-                    message = `Dear ${app.firstName}, you have been selected for the Aptitude Round for '${job?.title}'. Further details will be communicated soon.`
+                    message = `Dear ${app.firstName}, you have been selected for the Aptitude Round for '${job?.title}'.<br><br>Please <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/exam/${job?._id}" style="color: #2563eb; font-weight: bold; text-decoration: underline;">click here</a> to start your aptitude assessment. Ensure you have a stable internet connection.`
                     break;
                 case 'AI Interview Round':
                     message = `Hello ${app.firstName}, you have been selected for the AI Interview Round for '${job?.title}'. Further details will be communicated soon.`
@@ -620,5 +639,128 @@ export async function sendCandidateEmail(candidateId: string, message: string) {
     } catch (error: any) {
         console.error("Failed to send candidate email:", error)
         return { success: false, error: error.message }
+    }
+}
+
+export async function startExam(applicationId: string, examType: 'coding' | 'aptitude') {
+    try {
+        await connectToDatabase();
+        const application = await Application.findById(applicationId);
+        if (!application) throw new Error("Application not found");
+
+        if (examType === 'coding') {
+            if (application.codingExamStarted) return { success: false, error: "You have already started or attempted the coding exam." };
+            application.codingExamStarted = true;
+            application.status = "Coding Round";
+        } else {
+            if (application.aptitudeExamStarted) return { success: false, error: "You have already started or attempted the aptitude exam." };
+            application.aptitudeExamStarted = true;
+            application.status = "Apptitude Round";
+        }
+        await application.save();
+        revalidatePath('/dashboard');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function submitCodingExam(applicationId: string, codes: string[], results: any[]) {
+    try {
+        await connectToDatabase();
+        const application = await Application.findById(applicationId);
+        if (!application) throw new Error("Application not found");
+        
+        const job = await Job.findById(application.jobId).lean();
+
+        let totalBaseScore = 0;
+        let aiFeedback = "";
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        
+        let totalMarksAvailable = 0;
+
+        for (let i = 0; i < codes.length; i++) {
+            const code = codes[i];
+            const qResult = results[i];
+            const question = job?.codingQuestions?.[i];
+            if (!question) continue;
+            
+            totalMarksAvailable += question.marks;
+
+            if (qResult && qResult.every((tc: any) => tc.passed)) {
+                // Test cases passed, use AI to grade time/space complexity
+                try {
+                    const prompt = `
+                    You are an expert technical interviewer evaluating code.
+                    The candidate solved the problem: "${question.title}"
+                    Problem description: ${question.problemStatement}
+                    Code submitted:
+                    ${code}
+                    
+                    The code passed all test cases. The total marks for this question is ${question.marks}.
+                    Evaluate the Time and Space Complexity. If it is fully optimal (e.g. O(log n) instead of O(n) or O(n) instead of O(n^2)), give full marks. 
+                    If it is suboptimal or poor quality, deduct 1 or 2 marks. 
+                    Reply in strictly JSON format: {"score": <number>, "feedback": "<string explanation>"}
+                    `;
+                    const response = await ai.models.generateContent({
+                        model: 'gemini-2.5-flash',
+                        contents: prompt,
+                        config: { responseMimeType: "application/json" }
+                    });
+                    const responseText = response.text || '{}';
+                    const resJson = JSON.parse(responseText as string);
+                    totalBaseScore += (resJson.score || question.marks);
+                    aiFeedback += `Q${i+1} (${question.title}): ${resJson.feedback}\n`;
+                } catch (aiError) {
+                    // Fallback if AI fails
+                    totalBaseScore += question.marks;
+                }
+            }
+        }
+
+        application.codingScore = Math.min(totalBaseScore, totalMarksAvailable);
+        application.codingFeedback = aiFeedback;
+        application.codingExamSubmitted = true;
+        application.status = "Reviewed";
+        await application.save();
+
+        const emailHtml = getRecruitmentEmailTemplate({
+            candidateName: application.firstName,
+            role: job?.title || "",
+            status: "Exam Completed",
+            message: "Thank you for submitting your coding assessment. Your responses have been recorded and our team will get back to you with the results shortly."
+        });
+        await sendEmail({ to: application.email, subject: "Coding Assessment Received", html: emailHtml });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error(error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function submitAptitudeExam(applicationId: string, score: number) {
+    try {
+        await connectToDatabase();
+        const application = await Application.findById(applicationId);
+        if (!application) throw new Error("Application not found");
+        
+        application.aptitudeScore = score;
+        application.aptitudeExamSubmitted = true;
+        application.status = "Reviewed";
+        await application.save();
+
+        const job = await Job.findById(application.jobId).lean();
+        const emailHtml = getRecruitmentEmailTemplate({
+            candidateName: application.firstName,
+            role: job?.title || "",
+            status: "Exam Completed",
+            message: "Thank you for submitting your aptitude assessment. Your responses have been recorded."
+        });
+        await sendEmail({ to: application.email, subject: "Aptitude Assessment Received", html: emailHtml });
+
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
     }
 }

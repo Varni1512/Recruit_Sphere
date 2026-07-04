@@ -29,6 +29,11 @@ export interface IApplication extends Document {
         type: string;
         message: string;
     }[];
+    aptitudeExamStarted?: boolean;
+    codingExamStarted?: boolean;
+    aptitudeExamSubmitted?: boolean;
+    codingExamSubmitted?: boolean;
+    codingFeedback?: string;
     status: string; // "Pending", "Reviewed", "Rejected", "Accepted"
     rejectionReason?: string;
     createdAt: Date;
@@ -63,6 +68,11 @@ const ApplicationSchema: Schema = new Schema({
         type: String,
         message: String
     }],
+    aptitudeExamStarted: { type: Boolean, default: false },
+    codingExamStarted: { type: Boolean, default: false },
+    aptitudeExamSubmitted: { type: Boolean, default: false },
+    codingExamSubmitted: { type: Boolean, default: false },
+    codingFeedback: { type: String, default: "" },
     status: { type: String, default: "Applied", enum: ["Applied", "Pending", "Reviewed", "Rejected", "Accepted", "Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"] },
     rejectionReason: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now }

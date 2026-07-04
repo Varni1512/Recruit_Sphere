@@ -85,6 +85,7 @@ interface CandidatesClientProps {
 export function CandidatesClient({ initialCandidates, jobs = [] }: CandidatesClientProps) {
     const [selectedJobId, setSelectedJobId] = useState<string>("all")
     const [searchQuery, setSearchQuery] = useState("")
+    const [statusFilter, setStatusFilter] = useState("shortlisted")
 
     const displayRounds = useMemo(() => {
         if (selectedJobId === "all") {
@@ -125,6 +126,9 @@ export function CandidatesClient({ initialCandidates, jobs = [] }: CandidatesCli
                    c.email.toLowerCase().includes(query) ||
                    c.role.toLowerCase().includes(query)
         }
+        if (statusFilter === "shortlisted" && !["Shortlisted", "Coding Round", "Apptitude Round", "AI Interview Round", "Interview Round", "Hire"].includes(c.status)) {
+            return false
+        }
         
         return true
     })
@@ -162,10 +166,15 @@ export function CandidatesClient({ initialCandidates, jobs = [] }: CandidatesCli
                             />
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="outline">
-                                <Filter className="mr-2 h-4 w-4" />
-                                Filters
-                            </Button>
+                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Status Filter" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="shortlisted">Shortlisted & Above</SelectItem>
+                                    <SelectItem value="all">All Candidates</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </CardHeader>

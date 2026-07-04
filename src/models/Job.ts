@@ -26,7 +26,19 @@ export interface IJob extends Document {
         answer: any;
         marks: number;
     }[];
+    aptitudeExamWindow?: { start: Date; end: Date };
     examDuration?: number;
+    codingQuestions?: {
+        title: string;
+        problemStatement: string;
+        constraints: string;
+        marks: number;
+        testCases: { input: string; expectedOutput: string; isHidden: boolean; }[];
+        boilerplates: { language: string; code: string; }[];
+    }[];
+    codingExamWindow?: { start: Date; end: Date };
+    codingExamDuration?: number;
+    codingQuestionsPerCandidate?: number;
     hiringPipeline: {
         roundName: string;
         totalScore: number;
@@ -66,7 +78,25 @@ const JobSchema: Schema = new Schema({
         answer: mongoose.Schema.Types.Mixed, // string or string[]
         marks: { type: Number, default: 1 }
     }],
+    aptitudeExamWindow: {
+        start: { type: Date },
+        end: { type: Date }
+    },
     examDuration: { type: Number, default: 30 },
+    codingQuestions: [{
+        title: String,
+        problemStatement: String,
+        constraints: String,
+        marks: { type: Number, default: 10 },
+        testCases: [{ input: String, expectedOutput: String, isHidden: { type: Boolean, default: false } }],
+        boilerplates: [{ language: String, code: String }]
+    }],
+    codingExamWindow: {
+        start: { type: Date },
+        end: { type: Date }
+    },
+    codingExamDuration: { type: Number, default: 60 },
+    codingQuestionsPerCandidate: { type: Number, default: 2 },
     hiringPipeline: [{
         roundName: String,
         totalScore: Number,

@@ -11,7 +11,7 @@ export const useJobForm = () => {
   const [isSaving, setIsSaving] = useState(false)
   const [showATSModal, setShowATSModal] = useState(false)
 
-  const form = useForm<CreateJobInput>({
+  const form = useForm({
     resolver: zodResolver(createJobSchema),
     defaultValues: {
       title: "",
@@ -27,6 +27,9 @@ export const useJobForm = () => {
       atsCriteriaScore: 75,
       examDuration: 30,
       aptitudeQuestions: [],
+      codingExamDuration: 60,
+      codingQuestionsPerCandidate: 2,
+      codingQuestions: [],
       applicationCloseDays: 3,
       hiringDeadlineDays: 15,
       hiringPipeline: [
@@ -55,7 +58,7 @@ export const useJobForm = () => {
       return
     }
 
-    const { title, description, hiringPipeline, aptitudeQuestions } = form.getValues()
+    const { title, description, hiringPipeline, aptitudeQuestions, codingQuestions } = form.getValues()
 
     const invalidRound = hiringPipeline?.find((r: any) => r.selected && r.passingScore > r.totalScore)
     if (invalidRound) {
@@ -72,14 +75,41 @@ export const useJobForm = () => {
       }
     }
 
+    const codingRound = hiringPipeline?.find((r: any) => r.roundName === "Coding" || r.roundName === "Coding Round")
+    if (codingRound?.selected) {
+      if (!codingQuestions || codingQuestions.length === 0) {
+        alert("Please add at least one coding question if the Coding Round is selected.")
+        return
+      }
+      const codingQuestionsPerCandidate = form.getValues().codingQuestionsPerCandidate || codingQuestions.length
+      
+      if (codingQuestionsPerCandidate < codingQuestions.length) {
+        // Random subset mode: Each question must have exactly (totalScore / N) marks
+        const expectedMarksPerQuestion = codingRound.totalScore / codingQuestionsPerCandidate
+        const hasInvalidMarks = codingQuestions.some((q: any) => (q.marks || 0) !== expectedMarksPerQuestion)
+        
+        if (hasInvalidMarks) {
+          alert(`Since you are randomly assigning ${codingQuestionsPerCandidate} questions per candidate out of a pool of ${codingQuestions.length}, EVERY question must be worth exactly ${expectedMarksPerQuestion} marks to ensure candidates are graded out of the Total Score (${codingRound.totalScore}). Please adjust the question marks.`)
+          return
+        }
+      } else {
+        // All questions assigned mode: Sum of all questions must equal total score
+        const sumOfCodingMarks = (codingQuestions || []).reduce((sum: number, q: any) => sum + (q.marks || 0), 0)
+        if (sumOfCodingMarks !== codingRound.totalScore) {
+          alert(`Total marks in Coding Questions (${sumOfCodingMarks}) must equal the Coding Round Total Score (${codingRound.totalScore}).`)
+          return
+        }
+      }
+    }
+
     const extracted = extractKeywordsFromText(description || title)
     form.setValue("atsKeywords", extracted)
     setShowATSModal(true)
   }
 
-  const onSubmit = async (data: CreateJobInput) => {
+  const onSubmit = async (data: any) => {
     // Filter out rounds that are not selected
-    const selectedPipeline = data.hiringPipeline.filter(round => round.selected)
+    const selectedPipeline = data.hiringPipeline.filter((round: any) => round.selected)
     
     if (selectedPipeline.length === 0) {
       alert("Please select at least one round for the hiring pipeline.")
@@ -89,7 +119,9 @@ export const useJobForm = () => {
     const submissionData = {
       ...data,
       hiringPipeline: selectedPipeline,
-      aptitudeQuestions: form.getValues().aptitudeQuestions || []
+      aptitudeQuestions: form.getValues().aptitudeQuestions || [],
+      codingQuestions: form.getValues().codingQuestions || [],
+      codingQuestionsPerCandidate: form.getValues().codingQuestionsPerCandidate || 2
     }
 
     setIsSaving(true)

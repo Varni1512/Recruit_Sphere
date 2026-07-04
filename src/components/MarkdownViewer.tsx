@@ -7,9 +7,9 @@ import "@uiw/react-markdown-preview/markdown.css";
 // Dynamically import the markdown previewer safely for Next.js SSR
 const MarkdownPreview = dynamic(() => import('@uiw/react-markdown-preview'), { ssr: false })
 
-export default function MarkdownViewer({ source }: { source: string }) {
+export default function MarkdownViewer({ source, colorMode }: { source: string, colorMode?: "light" | "dark" }) {
     return (
-        <div data-color-mode="light" className="w-full">
+        <div data-color-mode={colorMode} className="w-full">
             <MarkdownPreview 
                 source={source} 
                 className="markdown-body custom-markdown"

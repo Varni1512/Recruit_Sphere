@@ -54,6 +54,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
         defaultValues: {
             examDuration: 30,
             aptitudeQuestions: [],
+            codingExamDuration: 60,
+            codingQuestions: [],
             hiringPipeline: []
         }
     })
@@ -84,6 +86,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                     form.reset({
                         examDuration: (res.job as any).examDuration || 30,
                         aptitudeQuestions: (res.job as any).aptitudeQuestions || [],
+                        codingExamDuration: (res.job as any).codingExamDuration || 60,
+                        codingQuestions: (res.job as any).codingQuestions || [],
                         hiringPipeline: (res.job as any).hiringPipeline || []
                     })
                 }
@@ -112,6 +116,16 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
             }
         }
 
+        const codingQuestions = form.getValues("codingQuestions")
+        const codingRound = pipeline?.find((r: any) => r.roundName === "Coding" || r.roundName === "Coding Round")
+        if (codingRound?.selected) {
+            const sumOfMarks = (codingQuestions || []).reduce((sum: number, q: any) => sum + (q.marks || 10), 0)
+            if (sumOfMarks !== codingRound.totalScore) {
+                alert(`Total marks in Coding Questions (${sumOfMarks}) must equal the Coding Round Total Score (${codingRound.totalScore}). Please adjust the question marks or the round score.`)
+                return
+            }
+        }
+
         setIsSaving(true)
         const updatedData = {
             title,
@@ -125,7 +139,9 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
             atsKeywords,
             atsCriteriaScore,
             examDuration: form.getValues("examDuration"),
+            codingExamDuration: form.getValues("codingExamDuration"),
             aptitudeQuestions,
+            codingQuestions,
             hiringPipeline: pipeline
         }
         try {

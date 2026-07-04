@@ -79,6 +79,29 @@ export const AptitudeConfigModal = ({ form, open, onOpenChange }: AptitudeConfig
               <p className="text-xs text-muted-foreground">Time limit for the candidate to complete the exam.</p>
             </div>
 
+            <div className="flex flex-col gap-3 bg-muted/30 p-3 rounded-lg border">
+                <div className="flex flex-col gap-1">
+                    <Label>Exam Availability Window</Label>
+                    <p className="text-xs text-muted-foreground">Candidates can only access the exam within this timeframe.</p>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex flex-col gap-1 w-1/2">
+                        <Label className="text-xs">Start Time</Label>
+                        <Input 
+                            type="datetime-local" 
+                            {...form.register("aptitudeExamWindow.start")} 
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1 w-1/2">
+                        <Label className="text-xs">End Time</Label>
+                        <Input 
+                            type="datetime-local" 
+                            {...form.register("aptitudeExamWindow.end")} 
+                        />
+                    </div>
+                </div>
+            </div>
+
             <Separator />
 
             <div className="grid gap-4">

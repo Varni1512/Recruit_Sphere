@@ -5,33 +5,35 @@ import { AlertCircle, Camera, Mic, Monitor } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import * as tf from '@tensorflow/tfjs'
 import * as cocoSsd from '@tensorflow-models/coco-ssd'
-
-// Need to import face-api. We will load models from CDN or public dir.
-// For simplicity in this demo, we'll focus on coco-ssd for mobile phone detection
-// and person detection (if no person, or >1 person).
-// A full face orientation tracker is heavy, but coco-ssd can tell if "cell phone" is in frame
-// and if "person" is exactly 1.
+import * as blazeface from '@tensorflow-models/blazeface'
 
 interface ProctoringEngineProps {
   onViolation: (type: string, message: string) => void
   onPermissionsGranted: () => void
   startProctoring: boolean
+  onReady?: () => void
 }
 
-export const ProctoringEngine = ({ onViolation, onPermissionsGranted, startProctoring }: ProctoringEngineProps) => {
+export const ProctoringEngine = ({ onViolation, onPermissionsGranted, startProctoring, onReady }: ProctoringEngineProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [permissions, setPermissions] = useState({ camera: false, screen: false })
   const [error, setError] = useState("")
   const [aiLoaded, setAiLoaded] = useState(false)
-  const modelRef = useRef<cocoSsd.ObjectDetection | null>(null)
+  
+  const cocoModelRef = useRef<cocoSsd.ObjectDetection | null>(null)
+  const blazefaceModelRef = useRef<blazeface.BlazeFaceModel | null>(null)
   
   // Track warnings
   const warningsRef = useRef<number>(0)
+  const tabSwitchCountRef = useRef<number>(0)
+  const missingFaceStartTimeRef = useRef<number | null>(null)
+  const completelyMissingStartTimeRef = useRef<number | null>(null)
   const hasRequested = useRef(false)
   
   const streamRef = useRef<MediaStream | null>(null)
   const screenStreamRef = useRef<MediaStream | null>(null)
   const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const tabSwitchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   const onViolationRef = useRef(onViolation)
   const onPermissionsGrantedRef = useRef(onPermissionsGranted)
@@ -88,15 +90,19 @@ export const ProctoringEngine = ({ onViolation, onPermissionsGranted, startProct
         setPermissions({ camera: true, screen: true })
         onPermissionsGrantedRef.current()
 
-        // 4. Load AI Model
+        // 4. Load AI Models
         await tf.ready()
-        modelRef.current = await cocoSsd.load()
-        if (isMounted) setAiLoaded(true)
+        cocoModelRef.current = await cocoSsd.load()
+        blazefaceModelRef.current = await blazeface.load()
+        if (isMounted) {
+          setAiLoaded(true)
+          if (onReady) onReady()
+        }
 
         // 5. Start AI & Audio Loop
         detectionIntervalRef.current = setInterval(() => detectViolations(analyser, dataArray), 1000) // check every 1 second
 
-        // 5. Detect Tab Switch
+        // 6. Detect Tab Switch
         document.addEventListener('visibilitychange', handleVisibilityChange)
 
       } catch (err: any) {
@@ -105,7 +111,7 @@ export const ProctoringEngine = ({ onViolation, onPermissionsGranted, startProct
     }
 
     const detectViolations = async (analyser?: AnalyserNode, dataArray?: any) => {
-      if (!videoRef.current || !modelRef.current || !isMounted) return
+      if (!videoRef.current || !cocoModelRef.current || !blazefaceModelRef.current || !isMounted) return
 
       const video = videoRef.current
       if (video.readyState !== 4) return // Wait for video to be ready
@@ -122,19 +128,55 @@ export const ProctoringEngine = ({ onViolation, onPermissionsGranted, startProct
           }
         }
 
-        const predictions = await modelRef.current.detect(video)
+        const cocoPredictions = await cocoModelRef.current.detect(video)
+        const facePredictions = await blazefaceModelRef.current.estimateFaces(video, false)
         
-        const persons = predictions.filter(p => p.class === 'person')
-        const cellphones = predictions.filter(p => p.class === 'cell phone')
-
-        if (persons.length === 0) {
-          handleWarning('NO_PERSON', 'No face detected in camera.')
-        } else if (persons.length > 1) {
-          handleWarning('MULTIPLE_PERSONS', 'Multiple people detected in frame.')
-        }
+        // Filter out low confidence cell phone detections (e.g. bottles)
+        const cellphones = cocoPredictions.filter(p => p.class === 'cell phone' && p.score > 0.65)
 
         if (cellphones.length > 0) {
-          if (isMounted) onViolationRef.current('MOBILE_DETECTED', 'Mobile phone detected. Exam terminated.')
+          if (isMounted) onViolationRef.current('MOBILE_DETECTED', 'mobile was detected')
+          return
+        }
+
+        const validFaces = facePredictions.filter(p => {
+            const prob = Array.isArray(p.probability) ? p.probability[0] : p.probability;
+            return prob > 0.9;
+        })
+        
+        const persons = cocoPredictions.filter(p => p.class === 'person' && p.score > 0.5)
+
+        if (validFaces.length === 0) {
+          // No face detected - check if body is also missing (camera covered or left seat)
+          if (persons.length === 0) {
+            if (completelyMissingStartTimeRef.current === null) {
+              completelyMissingStartTimeRef.current = Date.now()
+            } else if (Date.now() - completelyMissingStartTimeRef.current > 5000) {
+              handleWarning('FACE_MISSING', 'You are completely out of frame or camera is covered. Please return to the camera view.')
+              completelyMissingStartTimeRef.current = Date.now() // Reset timer after warning
+            }
+          } else {
+            completelyMissingStartTimeRef.current = null // Reset completely missing timer
+            // No face, but body detected - likely looking down or away
+            if (missingFaceStartTimeRef.current === null) {
+              missingFaceStartTimeRef.current = Date.now()
+            } else {
+              const timeMissing = Date.now() - missingFaceStartTimeRef.current
+              // Warning if face is missing for > 2 minutes (120000ms)
+              if (timeMissing > 120000) {
+                handleWarning('LOOKING_DOWN', 'You have been looking away from the screen for too long.')
+                missingFaceStartTimeRef.current = Date.now() // Reset timer after warning
+              }
+            }
+          }
+        } else {
+          // Face is back, reset timers
+          missingFaceStartTimeRef.current = null
+          completelyMissingStartTimeRef.current = null
+          
+          if (validFaces.length > 1) {
+            handleWarning('MULTIPLE_PERSONS', 'Multiple people detected in frame.')
+          }
         }
       } catch (e) {
         console.error("AI Detection Error:", e)
@@ -152,8 +194,32 @@ export const ProctoringEngine = ({ onViolation, onPermissionsGranted, startProct
     }
 
     const handleVisibilityChange = () => {
-      if (document.hidden && isMounted) {
-        handleWarning('TAB_SWITCH', 'Tab switching is not allowed.')
+      if (!isMounted) return
+      
+      if (document.hidden) {
+        tabSwitchCountRef.current += 1
+        const count = tabSwitchCountRef.current
+        
+        if (count >= 3) {
+          onViolationRef.current('TAB_SWITCH_LIMIT_EXCEEDED', 'You have switched tabs 3 times. Exam terminated.')
+          return
+        }
+        
+        const allowedTime = count === 1 ? 60 : 30
+        handleWarning('TAB_SWITCH', `Tab switching is not allowed. You must return within ${allowedTime} seconds. (Count: ${count}/3)`)
+        
+        tabSwitchTimeoutRef.current = setTimeout(() => {
+          if (isMounted) {
+            onViolationRef.current('TAB_SWITCH_TIMEOUT_EXCEEDED', `You were away from the exam tab for too long (>${allowedTime} seconds). Exam terminated.`)
+          }
+        }, allowedTime * 1000)
+        
+      } else {
+        // Returned to tab
+        if (tabSwitchTimeoutRef.current) {
+          clearTimeout(tabSwitchTimeoutRef.current)
+          tabSwitchTimeoutRef.current = null
+        }
       }
     }
 
@@ -164,6 +230,7 @@ export const ProctoringEngine = ({ onViolation, onPermissionsGranted, startProct
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop())
       if (screenStreamRef.current) screenStreamRef.current.getTracks().forEach(t => t.stop())
       if (detectionIntervalRef.current) clearInterval(detectionIntervalRef.current)
+      if (tabSwitchTimeoutRef.current) clearTimeout(tabSwitchTimeoutRef.current)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [startProctoring])

@@ -7,6 +7,9 @@ import { ProctoredExam } from "@/features/exam/components/ProctoredExam"
 import { submitExam } from "@/app/actions/examActions"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ShieldAlert, CheckCircle2 } from "lucide-react"
+import { startExam } from "@/app/actions/jobActions"
+import { reportProblem } from "@/app/actions/reportActions"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 
 export const ExamPortalClient = ({ job, application }: { job: any, application: any }) => {
   const [permissionsGranted, setPermissionsGranted] = useState(false)
@@ -16,6 +19,32 @@ export const ExamPortalClient = ({ job, application }: { job: any, application: 
   const [examClosedReason, setExamClosedReason] = useState("")
   const [examSubmitted, setExamSubmitted] = useState(false)
   const [triggerProctoring, setTriggerProctoring] = useState(false)
+  const [windowError, setWindowError] = useState("")
+
+  const [isReporting, setIsReporting] = useState(false)
+  const [reportIssue, setReportIssue] = useState("")
+  const [reportSubmitted, setReportSubmitted] = useState(false)
+
+  useEffect(() => {
+    if (application.aptitudeExamSubmitted) {
+        setWindowError("You have already submitted this exam.");
+        return;
+    }
+    if (application.aptitudeExamStarted) {
+        setWindowError("You have already attempted this exam. Multiple attempts are not allowed.");
+        return;
+    }
+    if (job.aptitudeExamWindow?.start && job.aptitudeExamWindow?.end) {
+        const now = new Date();
+        const start = new Date(job.aptitudeExamWindow.start);
+        const end = new Date(job.aptitudeExamWindow.end);
+        if (now < start) {
+            setWindowError(`The exam window opens at ${start.toLocaleString()}. Please return later.`);
+        } else if (now > end) {
+            setWindowError("The exam window has closed.");
+        }
+    }
+  }, [application, job]);
 
   const proctoringLogsRef = useRef<any[]>([])
   const handleViolationRef = useRef<((type: string, message: string) => void) | null>(null)
@@ -29,7 +58,7 @@ export const ExamPortalClient = ({ job, application }: { job: any, application: 
     setProctoringLogs(currentLogs)
     
     // Auto close conditions
-    if (type === 'MOBILE_DETECTED' || type === 'EXCESSIVE_WARNINGS' || type === 'SCREEN_STOPPED') {
+    if (type === 'MOBILE_DETECTED' || type === 'EXCESSIVE_WARNINGS' || type === 'SCREEN_STOPPED' || type === 'FULLSCREEN_EXIT' || type === 'TAB_SWITCH_LIMIT_EXCEEDED') {
       setExamClosed(true)
       setExamClosedReason(message)
       
@@ -48,11 +77,14 @@ export const ExamPortalClient = ({ job, application }: { job: any, application: 
     
     const blockAction = (e: ClipboardEvent | Event) => {
       e.preventDefault();
+      if (e.type === 'paste') {
+        alert("copy/ paste was not working like this");
+      }
     }
     
     const checkFullscreen = () => {
       if (!document.fullscreenElement && examStarted) {
-        if (handleViolationRef.current) handleViolationRef.current('FULLSCREEN_EXIT', 'Exiting full screen is not allowed.')
+        if (handleViolationRef.current) handleViolationRef.current('FULLSCREEN_EXIT', 'Exited full screen mode.')
       }
     }
 
@@ -72,6 +104,20 @@ export const ExamPortalClient = ({ job, application }: { job: any, application: 
   }, [examStarted])
 
 
+
+  if (windowError) {
+    return (
+      <div className="max-w-3xl mx-auto mt-20 p-6">
+        <Alert variant="destructive">
+          <ShieldAlert className="h-6 w-6" />
+          <AlertTitle className="text-lg">Access Denied</AlertTitle>
+          <AlertDescription className="text-base mt-2">
+            {windowError}
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
 
   if (examClosed) {
     return (
@@ -126,11 +172,23 @@ export const ExamPortalClient = ({ job, application }: { job: any, application: 
               <p className="text-xs text-muted-foreground">Candidate: {application.name}</p>
             </div>
           </div>
-          {examStarted && (
-             <div className="text-sm px-4 py-1.5 bg-primary/10 text-primary font-medium rounded-full">
-               Exam in Progress
-             </div>
-          )}
+          <div className="flex items-center gap-3">
+            {examStarted && (
+              <div className="text-sm px-4 py-1.5 bg-primary/10 text-primary font-medium rounded-full">
+                Exam in Progress
+              </div>
+            )}
+            {examStarted && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="border-destructive/30 text-destructive hover:bg-destructive hover:text-white"
+                onClick={() => setIsReporting(true)}
+              >
+                Report Issue
+              </Button>
+            )}
+          </div>
         </header>
 
         {/* Main Content Area */}
@@ -178,15 +236,19 @@ export const ExamPortalClient = ({ job, application }: { job: any, application: 
                     <Button 
                       size="lg" 
                       className="w-full sm:w-auto min-w-[200px]"
-                      onClick={() => {
+                      onClick={async () => {
                         if (!permissionsGranted) {
                           setTriggerProctoring(true)
                         } else {
-                          // Go Fullscreen
-                          if (document.documentElement.requestFullscreen) {
-                            document.documentElement.requestFullscreen().catch(e => console.error(e))
+                          const res = await startExam(application.id || application._id, 'aptitude')
+                          if (res.success) {
+                            if (document.documentElement.requestFullscreen) {
+                              document.documentElement.requestFullscreen().catch(e => console.error(e))
+                            }
+                            setExamStarted(true)
+                          } else {
+                            setWindowError(res.error || "Failed to start exam.")
                           }
-                          setExamStarted(true)
                         }
                       }}
                     >
@@ -247,9 +309,52 @@ export const ExamPortalClient = ({ job, application }: { job: any, application: 
                   </div>
                 </div>
              </div>
-          </aside>
+            </aside>
         </main>
       </div>
+
+      <Dialog open={isReporting} onOpenChange={setIsReporting}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Report an Issue</DialogTitle>
+                  <DialogDescription>
+                      Describe the problem you're facing. Our team will investigate.
+                  </DialogDescription>
+              </DialogHeader>
+              {!reportSubmitted ? (
+                  <div className="py-4">
+                      <textarea 
+                          className="w-full p-3 border rounded-md min-h-[120px] bg-background text-sm"
+                          placeholder="E.g. I cannot click on options, or the test is frozen..."
+                          value={reportIssue}
+                          onChange={(e) => setReportIssue(e.target.value)}
+                      />
+                  </div>
+              ) : (
+                  <div className="py-8 text-center text-green-500 font-medium flex flex-col items-center">
+                      <CheckCircle2 className="w-10 h-10 mb-2" />
+                      Your issue has been reported.
+                  </div>
+              )}
+              <DialogFooter>
+                  {!reportSubmitted && (
+                      <>
+                          <Button variant="outline" onClick={() => setIsReporting(false)}>Cancel</Button>
+                          <Button onClick={async () => {
+                              if (!reportIssue.trim()) return;
+                              await reportProblem(application.id || application._id, reportIssue);
+                              setReportSubmitted(true);
+                              setTimeout(() => {
+                                  setIsReporting(false);
+                                  setReportSubmitted(false);
+                                  setReportIssue("");
+                              }, 2000);
+                          }}>Submit Report</Button>
+                      </>
+                  )}
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
     </div>
   )
 }

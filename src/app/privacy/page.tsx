@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { 
     Building2, Shield, Lock, Eye, Scale, 
-    ArrowLeft, Mail, Info
+    ArrowLeft, Mail, Info, FileText
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -61,7 +61,7 @@ export default function PrivacyPage() {
 
                             <div className="space-y-4">
                                 <h1 className="text-3xl md:text-4xl font-black tracking-tight uppercase">Privacy Policy</h1>
-                                <p className="text-muted-foreground font-medium">Last Updated: April 18, 2026</p>
+                                <p className="text-muted-foreground font-medium">Effective Date: {new Date().toLocaleDateString()}</p>
                                 <div className="h-1.5 w-20 bg-primary" />
                             </div>
 
@@ -69,55 +69,71 @@ export default function PrivacyPage() {
                                 <section className="space-y-4">
                                     <div className="flex items-center gap-3 text-primary">
                                         <Info className="h-6 w-6" />
-                                        <h2 className="text-2xl font-bold m-0 text-foreground">Overview</h2>
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">1. Introduction</h2>
                                     </div>
                                     <p className="text-lg leading-relaxed text-muted-foreground">
-                                        At Recruit Sphere, we operate as a professional hiring agency. Your privacy is paramount. This policy outlines how we handle candidate data and client information within our AI-driven recruitment pipeline.
+                                        Recruit Sphere ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy outlines our practices regarding the collection, use, disclosure, and safeguarding of your information when you visit our website and use our AI-driven recruitment platform. By accessing or using our services, you consent to the data practices described in this policy.
                                     </p>
                                 </section>
 
                                 <section className="space-y-4">
                                     <div className="flex items-center gap-3 text-primary">
                                         <Lock className="h-6 w-6" />
-                                        <h2 className="text-2xl font-bold m-0 text-foreground">Data Collection</h2>
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">2. Information We Collect</h2>
                                     </div>
                                     <p className="text-muted-foreground">
-                                        We collect information necessary to fulfill our recruitment services:
+                                        We collect information that identifies, relates to, describes, or could reasonably be linked, directly or indirectly, with a particular consumer or device ("Personal Information"). The categories of information we collect include:
                                     </p>
                                     <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-                                        <li><strong>Personal Information:</strong> Name, email, phone number, and professional social profiles.</li>
-                                        <li><strong>Professional Data:</strong> Resumes, portfolios, and employment history.</li>
-                                        <li><strong>Assessment Data:</strong> Scores from proctored coding rounds and AI-conducted video interviews.</li>
+                                        <li><strong>Identifiers:</strong> Name, email address, postal address, phone number, and unique device identifiers.</li>
+                                        <li><strong>Professional or Employment-Related Information:</strong> Resumes, CVs, employment history, educational background, professional certifications, and portfolios.</li>
+                                        <li><strong>Assessment Data:</strong> Responses to aptitude tests, coding challenges, behavioral assessments, and AI-conducted video/audio interviews.</li>
+                                        <li><strong>Internet or Network Activity:</strong> Browsing history, search history, and interactions with our platform.</li>
                                     </ul>
                                 </section>
 
                                 <section className="space-y-4">
                                     <div className="flex items-center gap-3 text-primary">
                                         <Shield className="h-6 w-6" />
-                                        <h2 className="text-2xl font-bold m-0 text-foreground">AI and Data Processing</h2>
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">3. Use of AI and Automated Processing</h2>
                                     </div>
                                     <p className="text-muted-foreground font-medium">
-                                        Our platform uses advanced Machine Learning models to:
+                                        Recruit Sphere utilizes artificial intelligence (AI) and machine learning algorithms to facilitate the recruitment process.
                                     </p>
-                                    <div className="p-6 rounded-xl bg-muted/30 border border-primary/10 italic text-sm text-foreground/80">
-                                        "Perform automated resume intelligence, assessment scoring, and behavioral analysis during video interviews to provide objective candidate shortlisting."
+                                    <div className="p-6 rounded-xl bg-muted/30 border border-primary/10 italic text-sm text-foreground/80 leading-relaxed">
+                                        Our AI models process your professional data and assessment results to evaluate your qualifications against specific job requirements. This includes automated resume parsing, ATS scoring, and behavioral analysis during video interviews. While AI assists in the shortlisting process, final hiring decisions are always made by our client companies. You have the right to request human intervention or contest decisions based solely on automated processing.
                                     </div>
                                 </section>
 
                                 <section className="space-y-4">
                                     <div className="flex items-center gap-3 text-primary">
                                         <Eye className="h-6 w-6" />
-                                        <h2 className="text-2xl font-bold m-0 text-foreground">Third-Party Sharing</h2>
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">4. Data Sharing and Disclosure</h2>
                                     </div>
                                     <p className="text-muted-foreground">
-                                        As a service provider for companies, we share candidate data specifically with the client company for the role you have applied for. We do not sell your data to marketers or external data brokers.
+                                        We do not sell your Personal Information. We share your information only in the following circumstances:
+                                    </p>
+                                    <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
+                                        <li><strong>With Client Companies:</strong> When you apply for a position, your profile, assessment scores, and interview data are shared with the prospective employer.</li>
+                                        <li><strong>With Service Providers:</strong> We may share data with trusted third-party vendors who perform services on our behalf, such as hosting, data analysis, and email delivery (e.g., SMTP providers), under strict confidentiality agreements.</li>
+                                        <li><strong>For Legal Reasons:</strong> We may disclose information if required to do so by law or in response to valid requests by public authorities.</li>
+                                    </ul>
+                                </section>
+                                
+                                <section className="space-y-4">
+                                    <div className="flex items-center gap-3 text-primary">
+                                        <FileText className="h-6 w-6" />
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">5. Data Retention and Security</h2>
+                                    </div>
+                                    <p className="text-muted-foreground">
+                                        We implement industry-standard administrative, technical, and physical security measures to protect your Personal Information. Your data is retained only for as long as necessary to fulfill the purposes outlined in this policy, unless a longer retention period is required by law. Upon request or account deletion, your data will be securely erased or anonymized.
                                     </p>
                                 </section>
 
                                 <section className="space-y-4 pt-8 border-t">
-                                    <h2 className="text-2xl font-bold text-foreground">Contact Privacy Team</h2>
+                                    <h2 className="text-2xl font-bold text-foreground">6. Contact Our Privacy Team</h2>
                                     <p className="text-muted-foreground">
-                                        If you have questions regarding your data or wish to exercise your right to erasure, please contact us.
+                                        If you have any questions or concerns about this Privacy Policy, or if you wish to exercise your data protection rights (such as access, rectification, or erasure), please contact our Data Protection Officer:
                                     </p>
                                     <div className="flex items-center gap-2 font-bold text-primary">
                                         <Mail className="h-5 w-5" />
@@ -142,7 +158,7 @@ export default function PrivacyPage() {
                         </div>
                         
                         <p className="text-xs text-muted-foreground/60 font-medium" suppressHydrationWarning>
-                            © {new Date().getFullYear()} Recruit Sphere. Internal Administration Only.
+                            © {new Date().getFullYear()} Recruit Sphere. All rights reserved.
                         </p>
 
                         <div className="flex items-center gap-6 text-xs font-bold text-muted-foreground uppercase tracking-widest">

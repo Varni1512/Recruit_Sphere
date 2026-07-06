@@ -40,33 +40,33 @@ const fadeUpVariants: Variants = {
 const COMPANY_FEATURES = [
     {
         icon: Bot,
-        title: "End-to-End AI Agency",
-        description: "Submit your requirements and deadline. We handle sourcing, screening, and scheduling. No software for your HR team to manage.",
+        title: "End-to-End ATS Orchestration",
+        description: "Submit your requirements and deadline. We handle sourcing, screening, and automated ATS scoring out of the box.",
     },
     {
         icon: FileSearch,
-        title: "Instant Resume Intelligence",
-        description: "Our machine learning models parse job descriptions and instantly screen candidate resumes, setting dynamic passing thresholds.",
-    },
-    {
-        icon: CalendarDays,
-        title: "Smart Auto-Scheduling",
-        description: "The platform automatically constructs the complete hiring timeline—from coding rounds to interviews—based on your deadline.",
+        title: "Smart ATS Resume Scoring",
+        description: "Our intelligence models parse job descriptions and instantly screen candidate resumes against your custom keywords and criteria.",
     },
     {
         icon: ShieldCheck,
-        title: "Proctored Assessments",
-        description: "Shortlisted candidates progress through highly secure, anti-cheat proctored coding and aptitude testing environments.",
-    },
-    {
-        icon: Video,
-        title: "AI-Conducted Interviews",
-        description: "An advanced AI conducts dynamic video/audio interviews personalized for each candidate to validate their specific competencies.",
+        title: "Proctored Aptitude Exams",
+        description: "Assess cognitive abilities and logical reasoning with our customizable, timed, and anti-cheat aptitude testing environment.",
     },
     {
         icon: Zap,
-        title: "75% Faster Time-to-Hire",
-        description: "By eliminating human bottlenecks in initial screening and logistical scheduling, we secure the perfect hire in record time.",
+        title: "Advanced Coding Challenges",
+        description: "Evaluate engineering talent rigorously with our secure, embedded coding IDE, supporting multiple languages and automated test cases.",
+    },
+    {
+        icon: Video,
+        title: "AI-Conducted Interviews (Upcoming)",
+        description: "Coming soon: An advanced AI agent that conducts dynamic video/audio interviews personalized for each candidate.",
+    },
+    {
+        icon: CalendarDays,
+        title: "Dynamic Hiring Pipelines",
+        description: "Configure multi-stage recruitment pipelines (ATS -> Aptitude -> Coding) dynamically for every individual job posting.",
     }
 ]
 

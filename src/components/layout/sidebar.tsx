@@ -9,14 +9,12 @@ import {
     LayoutDashboard,
     SplitSquareHorizontal,
     Users,
-    LogOut,
-    Mail
+    LogOut
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { deleteRoleCookie } from "@/app/actions/auth"
 import { auth, signOut } from "@/lib/localAuth"
-import { generateDummyTest } from "@/app/actions/testActions"
 
 const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -72,28 +70,6 @@ export function Sidebar() {
 
             <div className="mt-auto border-t p-4">
                 <nav className="grid gap-1">
-                    <button
-                        onClick={async () => {
-                            const email = window.prompt("Enter candidate email to send dummy tests:")
-                            if (email) {
-                                try {
-                                    alert("Generating and sending emails. This might take a few seconds...")
-                                    const res = await generateDummyTest(email)
-                                    if (res.success) {
-                                        alert("Emails sent successfully!")
-                                    } else {
-                                        alert("Failed to send emails: " + res.error)
-                                    }
-                                } catch(e) {
-                                    alert("Error: " + e)
-                                }
-                            }
-                        }}
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-amber-500 transition-all hover:bg-amber-500/10 cursor-pointer mb-2"
-                    >
-                        <Mail className="h-4 w-4" />
-                        Send Test Exams
-                    </button>
                     <button
                         onClick={async () => {
                             await signOut(auth)

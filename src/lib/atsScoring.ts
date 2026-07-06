@@ -101,7 +101,7 @@ export function calculateATSScore(resumeText: string, jobDescription: string, at
     const cosineSim = calculateCosineSimilarity(resumeText, jobDescription);
     
     // Convert cosine similarity to a reasonable % score (empirically, multiply by slightly more to normalize to a 100 scale for user readability)
-    let similarityScore = Math.min(cosineSim * 200, 100); 
+    const similarityScore = Math.min(cosineSim * 200, 100); 
 
     // 2. Strict exact keyword matching (Deterministic Priority)
     let keywordScore = 0;

@@ -5,7 +5,8 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { 
     Building2, FileText, Scale, ShieldAlert, Zap,
-    Mail, CheckCircle2, AlertCircle, ArrowLeft
+    Mail, CheckCircle2, AlertCircle, ArrowLeft,
+    Gavel
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -61,7 +62,7 @@ export default function TermsPage() {
 
                             <div className="space-y-4">
                                 <h1 className="text-3xl md:text-4xl font-black tracking-tight uppercase">Terms of Service</h1>
-                                <p className="text-muted-foreground font-medium">Effective Date: April 18, 2026</p>
+                                <p className="text-muted-foreground font-medium">Effective Date: {new Date().toLocaleDateString()}</p>
                                 <div className="h-1 w-20 bg-primary" />
                             </div>
 
@@ -69,34 +70,34 @@ export default function TermsPage() {
                                 <section className="space-y-4">
                                     <div className="flex items-center gap-3 text-primary">
                                         <Scale className="h-6 w-6" />
-                                        <h2 className="text-2xl font-bold m-0 text-foreground">1. Service Definition</h2>
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">1. Acceptance of Terms</h2>
                                     </div>
                                     <p className="text-lg leading-relaxed text-muted-foreground">
-                                        Recruit Sphere operates as a <strong>Hiring-as-a-Service (HaaS)</strong> agency. We provide an end-to-end recruitment engine that uses AI to source, screen, and verify candidates for our client companies. By using our platform, you acknowledge that we are the sole administrator of the software and recruitment pipeline.
+                                        By accessing or using the Recruit Sphere platform ("Service"), you agree to be bound by these Terms of Service ("Terms"). These Terms constitute a legally binding agreement between you, whether personally or on behalf of an entity, and Recruit Sphere. If you do not agree with all of these terms, you are expressly prohibited from using the Service and must discontinue use immediately.
                                     </p>
                                 </section>
 
                                 <section className="space-y-6">
                                     <div className="flex items-center gap-3 text-primary">
                                         <Zap className="h-6 w-6" />
-                                        <h2 className="text-2xl font-bold m-0 text-foreground">2. User Responsibilities</h2>
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">2. User Responsibilities & Conduct</h2>
                                     </div>
                                     
                                     <div className="grid md:grid-cols-2 gap-6">
-                                        <div className="p-6 rounded-xl border bg-muted/20 space-y-3">
+                                        <div className="p-6 rounded-xl border bg-muted/20 space-y-3 shadow-sm">
                                             <h4 className="font-bold flex items-center gap-2">
                                                 <Building2 className="h-4 w-4 text-primary" /> Client Companies
                                             </h4>
-                                            <p className="text-xs text-muted-foreground leading-relaxed">
-                                                Clients must provide accurate job descriptions and adhere to established hiring deadlines. Recruit Sphere is not responsible for hiring decisions made by clients.
+                                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                                Clients must provide accurate, non-discriminatory job descriptions and adhere to established hiring timelines. You agree not to misuse the platform to harvest candidate data for unrelated purposes. Recruit Sphere is a facilitator; all final hiring decisions and employment liabilities remain solely with the Client Company.
                                             </p>
                                         </div>
-                                        <div className="p-6 rounded-xl border bg-muted/20 space-y-3">
+                                        <div className="p-6 rounded-xl border bg-muted/20 space-y-3 shadow-sm">
                                             <h4 className="font-bold flex items-center gap-2">
                                                 <CheckCircle2 className="h-4 w-4 text-primary" /> Candidates
                                             </h4>
-                                            <p className="text-xs text-muted-foreground leading-relaxed">
-                                                Candidates must provide truthful profile data. Attempting to circumvent proctored assessments or using unauthorized aids during AI interviews is strictly prohibited.
+                                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                                Candidates must provide truthful profile and professional data. Any attempt to compromise, reverse-engineer, or circumvent our proctored assessments (including using unauthorized third-party aids or AI tools during exams/interviews) constitutes a material breach and will result in immediate disqualification and account termination.
                                             </p>
                                         </div>
                                     </div>
@@ -105,23 +106,35 @@ export default function TermsPage() {
                                 <section className="space-y-4">
                                     <div className="flex items-center gap-3 text-primary">
                                         <ShieldAlert className="h-6 w-6" />
-                                        <h2 className="text-2xl font-bold m-0 text-foreground">3. AI-Driven Evaluations</h2>
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">3. AI-Driven Evaluations and Disclaimers</h2>
                                     </div>
                                     <p className="text-muted-foreground">
-                                        You acknowledge that our recruitment process involves automated decision-making and AI analysis. While our systems are designed for objective filtering, final selection authority remains with the client company.
+                                        You acknowledge that our recruitment workflow heavily leverages Artificial Intelligence (AI) for resume parsing, aptitude scoring, coding challenge evaluation, and video interview analysis. While these systems are engineered for high precision and objectivity:
                                     </p>
                                     <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg">
                                         <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                                        <p className="text-xs text-amber-700 font-medium italic">
-                                            "Recruit Sphere does not guarantee employment or interview placement for any candidate. We facilitate the shortlisting process based on data-driven metrics."
-                                        </p>
+                                        <div className="space-y-2">
+                                            <p className="text-sm text-amber-700 font-medium">
+                                                Recruit Sphere makes no warranties regarding the absolute accuracy or bias-free nature of automated decisions. We do not guarantee employment, interview placement, or any specific recruitment outcome for any candidate.
+                                            </p>
+                                        </div>
                                     </div>
                                 </section>
 
+                                <section className="space-y-4">
+                                    <div className="flex items-center gap-3 text-primary">
+                                        <Gavel className="h-6 w-6" />
+                                        <h2 className="text-2xl font-bold m-0 text-foreground">4. Limitation of Liability</h2>
+                                    </div>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL RECRUIT SPHERE, ITS AFFILIATES, DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE FOR ANY INDIRECT, PUNITIVE, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES, INCLUDING WITHOUT LIMITATION DAMAGES FOR LOSS OF PROFITS, GOODWILL, USE, DATA, OR OTHER INTANGIBLE LOSSES, ARISING OUT OF OR RELATING TO THE USE OF, OR INABILITY TO USE, THE SERVICE.
+                                    </p>
+                                </section>
+
                                 <section className="space-y-4 border-t pt-10">
-                                    <h2 className="text-2xl font-bold text-foreground">4. Limitation of Liability</h2>
+                                    <h2 className="text-2xl font-bold text-foreground">5. Modifications to Terms</h2>
                                     <p className="text-muted-foreground text-sm">
-                                        In no event shall Recruit Sphere be liable for any damages arising out of the use or inability to use the dashboard, or for any recruitment outcome. We reserve the right to suspend accounts that violate our integrity standards.
+                                        We reserve the right, at our sole discretion, to modify or replace these Terms at any time. If a revision is material, we will provide at least 30 days' notice prior to any new terms taking effect. By continuing to access or use our Service after those revisions become effective, you agree to be bound by the revised terms.
                                     </p>
                                 </section>
                             </div>

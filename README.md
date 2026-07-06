@@ -1,76 +1,48 @@
 # Recruit Sphere: Advanced AI-Driven Recruitment Platform
 
-Recruit Sphere is a professional-grade, full-stack recruitment platform designed to streamline the hiring process with automated ATS (Applicant Tracking System) scoring, multi-channel notifications, and high-performance dashboard analytics.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-blue)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+
+**Recruit Sphere** is a professional-grade, full-stack enterprise recruitment platform designed to automate and streamline the hiring process. Built for modern HR teams and tech recruiters, it provides an end-to-end Hiring-as-a-Service solution featuring intelligent resume parsing, dynamic recruitment pipelines, and secure assessments.
 
 ---
 
-## 🚀 Key Features
+## 🚀 Core Features
 
-- **Automated ATS Scoring**: Intelligent resume parsing that ranks candidates based on job-specific criteria and keywords.
-- **Dynamic Hiring Pipelines**: Configurable recruitment stages (Coding rounds, Interviews, Offers) for every job posting.
-- **High-Performance Architecture**: Built with Next.js 14 (App Router) using a streaming architecture for near-instant perceived speed.
-- **Centralized Logic**: Pure Service-Oriented Architecture (SOA) that decouples business logic from UI components.
-- **Real-time Notifications**: Integrated automated email system (SMTP) and in-app alerts for candidates and recruiters.
-- **Comprehensive Candidate Profiles**: Rich profile management including skill tracking, experience history, and resume hosting.
+- **Intelligent ATS Scoring:** Automated resume parsing that scores candidates dynamically based on job-specific criteria and keywords, establishing minimum passing thresholds.
+- **Dynamic Multi-Stage Pipelines:** Configurable recruitment stages for every individual job posting, supporting automated transitions through:
+  - **ATS Resume Screening**
+  - **Proctored Aptitude Exams** (Timed, customizable logical reasoning)
+  - **Advanced Coding Challenges** (Embedded IDE with multi-language support and test cases)
+- **AI-Conducted Interviews (Upcoming):** An autonomous AI module designed to conduct dynamic, behavioral, and technical video/audio interviews.
+- **Real-Time Notification System:** Integrated SMTP email delivery and in-app alerts keep candidates and recruiters instantly updated on status changes and exam schedules.
+- **Comprehensive Candidate Profiles:** A unified command center for candidates to track application statuses, manage skill portfolios, and host resumes.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: Next.js 14, React 19, Tailwind CSS, Shadcn UI
-- **State Management**: Zustand (Global UI), TanStack Query (Server State)
-- **Backend Orchestration**: Next.js Server Actions with a dedicated **Service Layer**
-- **Database**: MongoDB with Mongoose (Optimized Indexing)
-- **Validation**: Zod (End-to-end type safety)
-- **Security**: Server-side cookie-based sessions with Middleware protection
+Our platform leverages a modern, highly scalable tech stack:
+
+- **Frontend & Framework:** Next.js 14 (App Router), React 19, Tailwind CSS, Shadcn UI
+- **State Management:** Zustand (Global UI State), TanStack Query (Server State)
+- **Backend Orchestration:** Next.js Server Actions backed by a dedicated, decoupled **Service Layer** (SOA)
+- **Database:** MongoDB with Mongoose (Optimized Schema Indexing)
+- **Validation & Security:** Zod for end-to-end type safety, bcryptjs for hashing, and custom secure JWT/cookie-based session middleware
+- **Email Delivery:** Nodemailer (SMTP Integration)
 
 ---
 
 ## 🏗️ System Architecture
 
-<!-- ![Recruit Sphere Architecture](public/assets/architecture.png) -->
-
-*High-level overview of the Recruit Sphere service-oriented architecture.*
-
-<details>
-<summary>▶ Technical Topology (Click to expand)</summary>
-
-```mermaid
-graph TD
-    subgraph "UI Layer (Client/Server Components)"
-        P[Pages] --> C[Components]
-    end
-
-    subgraph "Action Layer (Next.js Server Actions)"
-        C --> A[Server Actions]
-    end
-
-    subgraph "Service Layer (Domain Business Logic)"
-        A --> JS[JobService]
-        A --> US[UserService]
-        A --> AS[ApplicationService]
-        A --> NS[NotificationService]
-    end
-
-    subgraph "Data Layer (Mongoose & Indices)"
-        JS --> M[(MongoDB)]
-        US --> M
-        AS --> M
-        NS --> M
-    end
-
-    style JS fill:#6366f1,color:#fff,stroke:#333,stroke-width:2px
-    style US fill:#6366f1,color:#fff,stroke:#333,stroke-width:2px
-    style AS fill:#6366f1,color:#fff,stroke:#333,stroke-width:2px
-    style NS fill:#6366f1,color:#fff,stroke:#333,stroke-width:2px
-```
-
-</details>
+Recruit Sphere employs a **Service-Oriented Architecture (SOA)**, separating UI rendering from business logic to ensure maximum testability and maintainability.
 
 ### Core Design Principles:
-1.  **Dumb Actions, Smart Services**: Server Actions act only as thin entry points; all complex logic resides in the Service Layer for testability.
-2.  **Streaming & Suspense**: Critical data-heavy pages use `loading.tsx` and React Suspense boundaries to eliminate blank screens.
-3.  **Database Indexing**: High-performance MongoDB queries through strategic indexing on `createdAt`, `status`, and `recruiterId`.
+1. **Dumb Actions, Smart Services:** Next.js Server Actions act purely as entry points. All complex business logic (e.g., ATS scoring, pipeline transitions) resides in modular classes within `src/services/`.
+2. **Streaming & Suspense:** Data-heavy dashboard routes utilize Next.js `loading.tsx` and React Suspense boundaries to eliminate blank screens and provide near-instant perceived load times.
+3. **Optimized Data Layer:** Standardized `.lean()` MongoDB queries combined with strategic indexing (on `createdAt`, `status`, `recruiterId`) ensure high-performance throughput even at scale.
 
 ---
 
@@ -78,13 +50,13 @@ graph TD
 
 ```bash
 src/
-├── app/               # Next.js App Router (Routes & Skeletons)
-├── components/        # Reusable UI components (Shared)
-├── features/          # Domain-driven feature modules (Jobs, Auth, Profile)
-├── lib/               # Utility functions & Database configuration
+├── app/               # Next.js App Router (Pages, Layouts, API Routes, Actions)
+├── components/        # Reusable UI components (Shadcn UI, Layouts, Forms)
+├── features/          # Domain-driven feature modules (Jobs, Candidates, Exams)
+├── lib/               # Utility functions, Database config, and Email setups
 ├── models/            # Mongoose Schemas & Database Models
-├── services/          # Centralized Business Logic (The brain of the app)
-└── shared/            # Shared types and Zod schemas
+├── services/          # Centralized Business Logic (JobService, ApplicationService)
+└── shared/            # Shared TypeScript types and Zod validation schemas
 ```
 
 ---
@@ -103,28 +75,33 @@ src/
    ```
 
 3. **Environment Setup**:
-   Create a `.env.local` file with the following:
+   Create a `.env.local` file in the root directory:
    ```env
+   # Database
    MONGODB_URI=your_mongodb_connection_string
-   SMTP_HOST=your_smtp_host
-   SMTP_PORT=your_smtp_port
-   SMTP_USER=your_smtp_user
-   SMTP_PASS=your_smtp_password
+
+   # Authentication & Security
+   JWT_SECRET=your_secure_jwt_secret
+
+   # Email Configuration (SMTP)
+   GMAIL_USER=your_email@gmail.com
+   GMAIL_APP_PASSWORD=your_app_specific_password
    ```
 
-4. **Run in development**:
+4. **Run the development server**:
    ```bash
    npm run dev
    ```
+   *The application will be available at `http://localhost:3000`.*
 
----
-
-## 📊 Performance Optimization
-- **Database**: Standardized on `.lean()` queries with indexing for maximum throughput.
-- **Rendering**: Implemented Parallel Data Fetching (`Promise.all`) in the Dashboard to reduce initial load latency.
-- **Bundle**: Optimized via dynamic imports for heavy components like charts.
+5. **Production Build**:
+   ```bash
+   npm run build
+   npm start
+   ```
 
 ---
 
 ## 📝 License
-Distributed under the MIT License. See `LICENSE` for more information.
+
+This project is distributed under the **MIT License**. See the `LICENSE` file for more information.

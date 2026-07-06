@@ -5,6 +5,11 @@ import Notification from "@/models/Notification"
 import { CreateJobInput } from "@/shared/schemas/jobSchema"
 
 export class JobService {
+  /**
+   * Creates a new job posting and calculates the automated round schedules.
+   * @param {CreateJobInput} data - The validated job creation payload.
+   * @returns {Promise<Object>} The newly created job document.
+   */
   static async createJob(data: CreateJobInput) {
     await connectToDatabase()
 
@@ -39,12 +44,19 @@ export class JobService {
 
     await newJob.save()
 
-    // Trigger Notifications asynchronously (or via internal events)
     await this.notifyRelevantUsers(newJob)
 
     return JSON.parse(JSON.stringify(newJob))
   }
 
+  /**
+   * Distributes the hiring pipeline rounds evenly across the active hiring window.
+   * @param {any[]} pipeline - Array of selected pipeline rounds.
+   * @param {Date} startDate - The date after applications close.
+   * @param {number} windowDays - Total days allocated for pipeline execution.
+   * @returns {Object[]} Array of scheduled round dates.
+   * @private
+   */
   private static calculateRoundSchedule(pipeline: any[], startDate: Date, windowDays: number) {
     if (pipeline.length === 0) return []
     
@@ -59,8 +71,13 @@ export class JobService {
     })
   }
 
+  /**
+   * Dispatches automated notifications to relevant candidates and recruiters
+   * upon successful job creation.
+   * @param {any} job - The job document that was created.
+   * @private
+   */
   private static async notifyRelevantUsers(job: any) {
-    // Candidates notification
     const candidates = await User.find({ role: 'candidate' }, { email: 1 }).lean()
     const notifications = candidates.map(c => ({
       recipientEmail: c.email,
@@ -73,7 +90,6 @@ export class JobService {
       await Notification.insertMany(notifications)
     }
 
-    // Recruiter self-notification
     const recruiters = await User.find({ role: 'recruiter' }, { email: 1 }).lean()
     const recruiterNotifs = recruiters.map(r => ({
       recipientEmail: r.email,
@@ -87,11 +103,15 @@ export class JobService {
     }
   }
 
+  /**
+   * Synchronizes active job statuses by automatically closing expired jobs.
+   * This acts as an automated background reconciliation mechanism.
+   * @returns {Promise<void>}
+   */
   static async syncJobStatuses() {
     await connectToDatabase()
     const now = new Date()
     
-    // Update all Active jobs that have passed their applicationCloseDate to Closed
     const result = await Job.updateMany(
       { 
         status: "Active", 
@@ -107,18 +127,28 @@ export class JobService {
     }
   }
 
+  /**
+   * Retrieves a list of jobs based on the provided filter criteria.
+   * Forces a status synchronization before querying to ensure fresh data.
+   * @param {any} filter - Optional Mongoose query filter.
+   * @returns {Promise<Object[]>} Array of job documents.
+   */
   static async getJobs(filter?: any) {
     await connectToDatabase()
-    // Sync statuses before fetching
     await this.syncJobStatuses()
     
     const jobs = await Job.find(filter).sort({ createdAt: -1 }).lean()
     return JSON.parse(JSON.stringify(jobs))
   }
 
+  /**
+   * Retrieves a single job document by its unique identifier.
+   * Forces a status synchronization before querying.
+   * @param {string} id - The MongoDB ObjectId of the job.
+   * @returns {Promise<Object|null>} The job document or null if not found.
+   */
   static async getJobById(id: string) {
     await connectToDatabase()
-    // Sync statuses before fetching
     await this.syncJobStatuses()
     
     const job = await Job.findById(id).lean()

@@ -5,6 +5,12 @@ import { sendEmail } from "@/lib/email"
 import { RegisterInput, ResetPasswordInput } from "@/shared/schemas/authSchema"
 
 export class AuthService {
+  /**
+   * Registers a new user in the system with securely hashed credentials.
+   * @param {RegisterInput} data - The validated registration payload.
+   * @returns {Promise<Object>} The newly created, sanitized user object.
+   * @throws {Error} If the email is already registered.
+   */
   static async register(data: RegisterInput) {
     await connectToDatabase()
 
@@ -26,6 +32,13 @@ export class AuthService {
     return this.toSafeUser(newUser)
   }
 
+  /**
+   * Authenticates a user against their email and password.
+   * @param {string} email - The user's email address.
+   * @param {string} password - The user's plaintext password.
+   * @returns {Promise<Object>} The authenticated, sanitized user object.
+   * @throws {Error} If credentials are invalid.
+   */
   static async authenticate(email: string, password: string) {
     await connectToDatabase()
     const user = await User.findOne({ email: email.toLowerCase() })
@@ -42,6 +55,12 @@ export class AuthService {
     return this.toSafeUser(user)
   }
 
+  /**
+   * Generates and dispatches a one-time password (OTP) for password resets.
+   * @param {string} email - The email address associated with the account.
+   * @returns {Promise<boolean>} True if the OTP was successfully dispatched.
+   * @throws {Error} If the user is not found.
+   */
   static async sendPasswordResetOTP(email: string) {
     await connectToDatabase()
     const user = await User.findOne({ email: email.toLowerCase() })
@@ -83,6 +102,12 @@ export class AuthService {
     return true
   }
 
+  /**
+   * Validates an OTP and resets the user's password.
+   * @param {ResetPasswordInput} data - The payload containing email, OTP, and new password.
+   * @returns {Promise<boolean>} True if the password was successfully reset.
+   * @throws {Error} If the OTP is invalid or expired.
+   */
   static async resetPassword(data: ResetPasswordInput) {
     await connectToDatabase()
     const user = await User.findOne({
@@ -104,6 +129,13 @@ export class AuthService {
     return true
   }
 
+  /**
+   * Sanitizes a user document by stripping sensitive information (e.g., password hashes)
+   * and calculating the profile completion percentage before returning to the client.
+   * @param {any} user - The raw Mongoose user document.
+   * @returns {Object} The sanitized safe user profile.
+   * @private
+   */
   private static toSafeUser(user: any) {
     const fieldsToTrack = [
         "fullName", "email", "phone", "location",

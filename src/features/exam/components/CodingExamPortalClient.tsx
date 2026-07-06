@@ -80,7 +80,7 @@ export function CodingExamPortalClient({ job, application }: CodingExamPortalCli
 
     // Initialize randomized questions
     useEffect(() => {
-        let pool = [...(job.codingQuestions || [])];
+        const pool = [...(job.codingQuestions || [])];
         // Fisher-Yates shuffle
         for (let i = pool.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));

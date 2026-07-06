@@ -52,7 +52,7 @@ export const AptitudeConfigModal = ({ form, open, onOpenChange }: AptitudeConfig
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="!max-w-5xl !w-[90vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b shrink-0 bg-muted/30">
           <div className="flex justify-between items-center">
             <div>

@@ -6,18 +6,22 @@ import { sendEmail } from "@/lib/email"
 import { getRecruitmentEmailTemplate } from "@/lib/emailTemplates"
 
 export class ApplicationService {
+  /**
+   * Processes a candidate's job application, including ATS scoring and status evaluation.
+   * @param {any} data - The application submission payload.
+   * @returns {Promise<Object>} The serialized application document.
+   * @throws {Error} If the job is not found or applications are closed.
+   */
   static async applyToJob(data: any) {
     await connectToDatabase()
 
     const job = await Job.findById(data.jobId).lean()
     if (!job) throw new Error("Job not found")
 
-    // Check application deadline
     if (job.applicationCloseDate && new Date() > new Date(job.applicationCloseDate)) {
       throw new Error("Applications for this job are closed")
     }
 
-    // ATS Scoring logic
     const { score, status, reason } = await this.evaluateATSScore(data.resumeUrl, job)
 
     const newApp = new Application({
@@ -29,17 +33,23 @@ export class ApplicationService {
 
     await newApp.save()
 
-    // Update job candidate count
+    await newApp.save()
+
     await Job.findByIdAndUpdate(data.jobId, { $inc: { candidatesCount: 1 } })
 
-    // Orchestrate Notifications correctly in a production system (transactional or event-based)
     await this.notifyNewApplication(newApp, job, status, reason)
 
     return JSON.parse(JSON.stringify(newApp))
   }
 
+  /**
+   * Evaluates a candidate's resume against job requirements using keyword matching.
+   * @param {string} resumeUrl - The URL of the candidate's uploaded resume PDF.
+   * @param {any} job - The job document containing ATS criteria.
+   * @returns {Promise<{score: number, status: string, reason: string}>} Evaluation results.
+   */
   static async evaluateATSScore(resumeUrl: string, job: any) {
-    let score = Math.floor(Math.random() * 20) + 60 // fallback
+    let score = Math.floor(Math.random() * 20) + 60
     let status = "Applied"
     let reason = ""
 
@@ -78,8 +88,15 @@ export class ApplicationService {
     return { score, status, reason }
   }
 
+  /**
+   * Dispatches notifications to the candidate regarding their application status.
+   * @param {any} app - The application document.
+   * @param {any} job - The job document.
+   * @param {string} status - The evaluation status.
+   * @param {string} reason - The rejection reason (if applicable).
+   * @private
+   */
   private static async notifyNewApplication(app: any, job: any, status: string, reason: string) {
-    // 1. Candidate Notification
     await Notification.create({
       recipientEmail: app.email,
       type: status === 'Shortlisted' ? 'SHORTLISTED' : (status === 'Rejected' ? 'REJECTION' : 'APPLICATION_RECEIVED'),
@@ -88,7 +105,6 @@ export class ApplicationService {
       relatedApplicationId: app._id.toString()
     })
 
-    // 2. Email System
     const html = getRecruitmentEmailTemplate({
       candidateName: app.firstName,
       role: job.title,
@@ -116,6 +132,12 @@ export class ApplicationService {
     return `Application Received: ${title}`
   }
 
+  /**
+   * Updates the status of an existing application and notifies the candidate.
+   * @param {string} applicationId - The MongoDB ObjectId of the application.
+   * @param {string} status - The new status to apply.
+   * @returns {Promise<Object>} The updated application document.
+   */
   static async updateStatus(applicationId: string, status: string) {
       await connectToDatabase()
       const app = await Application.findByIdAndUpdate(applicationId, { status }, { new: true })
@@ -123,7 +145,6 @@ export class ApplicationService {
       
       const job = await Job.findById(app.jobId).lean()
       
-      // Notify status change
       await this.notifyStatusUpdate(app, job, status)
       
       return JSON.parse(JSON.stringify(app))

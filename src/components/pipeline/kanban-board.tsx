@@ -51,7 +51,7 @@ const defaultColumns: Column[] = [
     { id: "Shortlisted", title: "Shortlisted" },
     { id: "Coding Round", title: "Coding Round" },
     { id: "Apptitude Round", title: "Apptitude Round" },
-    { id: "AI Interview Round", title: "AI Interview Round" },
+    { id: "AI Interview Round", title: "AI Interview Round (Future Function)" },
     { id: "Interview Round", title: "Interview Round" },
     { id: "Hire", title: "Hire" },
     { id: "Rejected", title: "Rejected" },
@@ -84,7 +84,10 @@ export function KanbanBoard({ initialCandidates, jobs = [] }: KanbanBoardProps) 
                 const dynamicCols = [
                     { id: "Applied", title: "Applied" },
                     { id: "Shortlisted", title: "Shortlisted" },
-                    ...job.pipelineStages.map(stage => ({ id: stage, title: stage })),
+                    ...job.pipelineStages.map(stage => ({ 
+                        id: stage, 
+                        title: stage === "AI Interview Round" || stage === "AI Interview" ? `${stage} (Future Function)` : stage 
+                    })),
                     { id: "Hire", title: "Hire" },
                     { id: "Rejected", title: "Rejected" },
                 ]

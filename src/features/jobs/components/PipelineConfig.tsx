@@ -40,6 +40,7 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
           const isSelected = form.watch(`hiringPipeline.${index}.selected`);
           const isAptitude = field.roundName === "Aptitude" || field.roundName === "Apptitude Round";
           const isCoding = field.roundName === "Coding" || field.roundName === "Coding Round";
+          const isAIInterview = field.roundName === "AI Interview" || field.roundName === "AI Interview Round";
           
           return (
             <div 
@@ -55,16 +56,18 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
                   <div className="flex items-center space-x-2">
                     <Checkbox 
                       id={`round-${index}`}
-                      checked={isSelected}
+                      checked={isAIInterview ? false : isSelected}
+                      disabled={isAIInterview}
                       onCheckedChange={(checked) => {
                         form.setValue(`hiringPipeline.${index}.selected`, !!checked);
                       }}
                     />
                     <Label 
                       htmlFor={`round-${index}`}
-                      className={`font-semibold cursor-pointer ${!isSelected && "text-muted-foreground"}`}
+                      className={`font-semibold cursor-pointer ${(!isSelected || isAIInterview) && "text-muted-foreground"}`}
                     >
                       {field.roundName}
+                      {isAIInterview && <span className="ml-2 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">Future Function</span>}
                     </Label>
                   </div>
                 </div>
@@ -100,7 +103,7 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
                   <Input 
                     type="number" 
                     className="h-8 text-sm"
-                    disabled={!isSelected}
+                    disabled={!isSelected || isAIInterview}
                     {...form.register(`hiringPipeline.${index}.totalScore`, { valueAsNumber: true })} 
                   />
                 </div>
@@ -109,11 +112,11 @@ export const PipelineConfig = ({ form }: PipelineConfigProps) => {
                   <Input 
                     type="number" 
                     className={`h-8 text-sm font-medium ${
-                      isSelected && form.watch(`hiringPipeline.${index}.passingScore`) > form.watch(`hiringPipeline.${index}.totalScore`) 
+                      isSelected && !isAIInterview && form.watch(`hiringPipeline.${index}.passingScore`) > form.watch(`hiringPipeline.${index}.totalScore`) 
                         ? "border-destructive text-destructive focus-visible:ring-destructive" 
                         : "text-primary"
                     }`}
-                    disabled={!isSelected}
+                    disabled={!isSelected || isAIInterview}
                     {...form.register(`hiringPipeline.${index}.passingScore`, { valueAsNumber: true })} 
                   />
                 </div>

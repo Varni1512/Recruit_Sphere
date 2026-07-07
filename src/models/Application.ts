@@ -22,6 +22,8 @@ export interface IApplication extends Document {
     aptitudeScore: number;
     codingScore: number;
     aiInterviewScore: number;
+    aiInterviewReport?: string;
+    wantsReportEmail?: boolean;
     technicalInterviewScore: number;
     finalInterviewScore: number;
     proctoringLogs?: {
@@ -61,6 +63,8 @@ const ApplicationSchema: Schema = new Schema({
     aptitudeScore: { type: Number, default: 0 },
     codingScore: { type: Number, default: 0 },
     aiInterviewScore: { type: Number, default: 0 },
+    aiInterviewReport: { type: String, required: false },
+    wantsReportEmail: { type: Boolean, default: false },
     technicalInterviewScore: { type: Number, default: 0 },
     finalInterviewScore: { type: Number, default: 0 },
     proctoringLogs: [{

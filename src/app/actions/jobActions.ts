@@ -12,7 +12,7 @@ import { getRecruitmentEmailTemplate } from "@/lib/emailTemplates"
 import { JobService } from "@/services/jobService"
 import { createJobSchema } from "@/shared/schemas/jobSchema"
 import { calculateATSScore } from "@/lib/atsScoring"
-import { GoogleGenAI } from "@google/genai"
+import { Groq } from "groq-sdk"
 
 const capitalize = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
@@ -409,6 +409,7 @@ export async function getAllApplications(activeOnly: boolean = false) {
                  aptitudeScore: typeof app.aptitudeScore === 'number' ? app.aptitudeScore : 0,
                  codingScore: typeof app.codingScore === 'number' ? app.codingScore : 0,
                  aiInterviewScore: typeof app.aiInterviewScore === 'number' ? app.aiInterviewScore : 0,
+                 aiInterviewReport: app.aiInterviewReport,
                  technicalInterviewScore: typeof app.technicalInterviewScore === 'number' ? app.technicalInterviewScore : 0,
                  finalInterviewScore: typeof app.finalInterviewScore === 'number' ? app.finalInterviewScore : 0,
                  collegeYear: app.collegeYear,
@@ -677,7 +678,7 @@ export async function submitCodingExam(applicationId: string, codes: string[], r
 
         let totalBaseScore = 0;
         let aiFeedback = "";
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
         
         let totalMarksAvailable = 0;
 
@@ -704,12 +705,12 @@ export async function submitCodingExam(applicationId: string, codes: string[], r
                     If it is suboptimal or poor quality, deduct 1 or 2 marks. 
                     Reply in strictly JSON format: {"score": <number>, "feedback": "<string explanation>"}
                     `;
-                    const response = await ai.models.generateContent({
-                        model: 'gemini-2.5-flash',
-                        contents: prompt,
-                        config: { responseMimeType: "application/json" }
+                    const response = await groq.chat.completions.create({
+                        messages: [{ role: 'user', content: prompt }],
+                        model: 'llama3-8b-8192',
+                        response_format: { type: "json_object" }
                     });
-                    const responseText = response.text || '{}';
+                    const responseText = response.choices[0]?.message?.content || '{}';
                     const resJson = JSON.parse(responseText as string);
                     totalBaseScore += (resJson.score || question.marks);
                     aiFeedback += `Q${i+1} (${question.title}): ${resJson.feedback}\n`;

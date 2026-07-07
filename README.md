@@ -53,10 +53,12 @@ src/
 ├── app/               # Next.js App Router (Pages, Layouts, API Routes, Actions)
 ├── components/        # Reusable UI components (Shadcn UI, Layouts, Forms)
 ├── features/          # Domain-driven feature modules (Jobs, Candidates, Exams)
+├── hooks/             # Custom React hooks
 ├── lib/               # Utility functions, Database config, and Email setups
 ├── models/            # Mongoose Schemas & Database Models
 ├── services/          # Centralized Business Logic (JobService, ApplicationService)
-└── shared/            # Shared TypeScript types and Zod validation schemas
+├── shared/            # Shared TypeScript types and Zod validation schemas
+└── store/             # Global state management using Zustand
 ```
 
 ---
@@ -80,8 +82,16 @@ src/
    # Database
    MONGODB_URI=your_mongodb_connection_string
 
-   # Authentication & Security
-   JWT_SECRET=your_secure_jwt_secret
+   # AI Integrations
+   GROQ_API_KEY=your_groq_api_key
+
+   # Cloudinary (Media Storage)
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+
+   # App Configuration
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
 
    # Email Configuration (SMTP)
    GMAIL_USER=your_email@gmail.com

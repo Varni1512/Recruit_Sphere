@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
 
     const isAuthRoute = path === '/login' || path === '/signup' || path === '/forgot-password'
     const isPublicPage = path === '/' || path === '/terms' || path === '/privacy'
-    const isCandidateRoute = path === '/candidate' || path.startsWith('/candidate/') || path.startsWith('/exam/') || path.startsWith('/coding-exam/')
+    const isCandidateRoute = path === '/candidate' || path.startsWith('/candidate/') || path.startsWith('/exam/') || path.startsWith('/coding-exam/') || path.startsWith('/interview/')
 
     // Ignore static files, api routes, Next.js internal paths
     if (
@@ -51,8 +51,8 @@ export function middleware(request: NextRequest) {
             }
         }
         if (roleCookie === 'recruiter' && isCandidateRoute) {
-            // Allow recruiters to access exam URLs for testing purposes
-            if (!path.startsWith('/exam/') && !path.startsWith('/coding-exam/')) {
+            // Allow recruiters to access exam/interview URLs for testing purposes
+            if (!path.startsWith('/exam/') && !path.startsWith('/coding-exam/') && !path.startsWith('/interview/')) {
                 return NextResponse.redirect(new URL('/dashboard', request.url))
             }
         }

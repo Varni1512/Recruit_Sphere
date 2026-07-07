@@ -35,7 +35,7 @@ export const useJobForm = () => {
       hiringPipeline: [
         { roundName: "Aptitude", totalScore: 100, passingScore: 70, selected: true },
         { roundName: "Coding", totalScore: 100, passingScore: 70, selected: true },
-        { roundName: "AI Interview", totalScore: 100, passingScore: 70, selected: true },
+        { roundName: "AI Interview", totalScore: 100, passingScore: 70, selected: false },
         { roundName: "Technical Interview", totalScore: 100, passingScore: 70, selected: true },
         { roundName: "Final Interview", totalScore: 100, passingScore: 70, selected: true },
       ],
